@@ -1,0 +1,54 @@
+{
+    "name": "react-parallel/event-loop",
+    "description": "\ud83c\udf00\ud83c\udf00 Event Loop bridge to ext-parallel Events",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Cees-Jan Kiewiet",
+            "email": "ceesjank@gmail.com",
+            "homepage": "http://wyrihaximus.net/"
+        }
+    ],
+    "require": {
+        "php": "^7.4",
+        "ext-parallel": "*",
+        "react/event-loop": "^1.1",
+        "react/promise": "^2.7",
+        "reactivex/rxphp": "^2.0",
+        "wyrihaximus/constants": "^1.4.3"
+    },
+    "require-dev": {
+        "wyrihaximus/async-test-utilities": "^2.2"
+    },
+    "config": {
+        "platform": {
+            "php": "7.4.7"
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "unused": [
+            "ext-parallel"
+        ]
+    },
+    "autoload": {
+        "psr-4": {
+            "ReactParallel\\EventLoop\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ReactParallel\\Tests\\EventLoop\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "post-install-cmd": [
+            "composer normalize"
+        ],
+        "post-update-cmd": [
+            "composer normalize"
+        ]
+    }
+}

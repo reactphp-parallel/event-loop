@@ -1,0 +1,19 @@
+{
+    "timeout": 120,
+    "source": {
+        "directories": [
+            "src"
+        ]
+    },
+    "logs": {
+        "text": "infection.log"
+    },
+    "mutators": {
+        "@default": true,
+        "MethodCallRemoval": {
+            "ignore": [
+                "ReactParallel\\EventLoop\\EventLoopBridge::__construct"
+            ]
+        }
+    }
+}
