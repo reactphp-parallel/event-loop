@@ -131,6 +131,7 @@ final class EventLoopBridge
     private function handleFutureReadEvent(Events\Event $event): void
     {
         $this->futures[spl_object_hash($event->object)]->resolve($event->value);
+        unset($this->futures[spl_object_hash($event->object)]);
     }
 
     private function handleChannelReadEvent(Events\Event $event): void
