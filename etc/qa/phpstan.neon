@@ -1,11 +1,10 @@
 parameters:
 	checkMissingIterableValueType: false
 	ignoreErrors:
-	    - '#Control structures using switch should not be used.#'
 	    - '#Function sleep is unsafe to use.#'
 	    - '#Do not throw the \\Exception base class. Instead, extend the \\Exception base class.#'
 	ergebnis:
 		classesAllowedToBeExtended:
 			- Exception
 includes:
-	- vendor/wyrihaximus/async-test-utilities/rules.neon
+	- ../../vendor/wyrihaximus/async-test-utilities/rules.neon

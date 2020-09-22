@@ -85,6 +85,21 @@ $eventLoopBridge->await($future)->then(function (string $message) {
 $loop->run();
 ```
 
+## Metrics
+
+This package supports metrics through [`wyrihaximus/metrics`](https://github.com/wyrihaximus/php-metrics):
+
+```php
+use React\EventLoop\Factory;
+use ReactParallel\EventLoop\EventLoopBridge;
+use ReactParallel\EventLoop\Metrics;
+use WyriHaximus\Metrics\Configuration;
+use WyriHaximus\Metrics\InMemory\Registry;
+
+$loop = Factory::create();
+$eventLoopBridge = (new EventLoopBridge($loop))->withMetrics(Metrics::create(new Registry(Configuration::create())));
+```
+
 ## Contributing ##
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for details.

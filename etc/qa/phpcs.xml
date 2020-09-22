@@ -6,7 +6,7 @@
     <arg name="cache" value=".phpcs.cache" /> <!-- cache the results and don't commit them -->
     <arg value="np" /> <!-- n = ignore warnings, p = show progress -->
 
-    <file>src</file>
+    <file>../../src</file>
 
     <rule ref="WyriHaximus-OSS" />
 </ruleset>
