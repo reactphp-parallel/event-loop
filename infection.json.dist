@@ -6,7 +6,10 @@
         ]
     },
     "logs": {
-        "text": "infection.log"
+        "text": "./var/infection.log",
+        "summary": "./var/infection-summary.log",
+        "json": "./var/infection.json",
+        "perMutator": "./var/infection-per-mutator.md"
     },
     "mutators": {
         "@default": true,
@@ -15,5 +18,8 @@
                 "ReactParallel\\EventLoop\\EventLoopBridge::__construct"
             ]
         }
+    },
+    "phpUnit": {
+        "configDir": "./etc/qa/"
     }
 }

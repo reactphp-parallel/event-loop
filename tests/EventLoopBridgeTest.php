@@ -3,19 +3,18 @@
 namespace ReactParallel\Tests\EventLoop;
 
 use parallel\Channel;
-use parallel\Events;
 use parallel\Future;
 use parallel\Runtime;
 use React\EventLoop\Factory;
 use ReactParallel\EventLoop\CanceledFuture;
 use ReactParallel\EventLoop\EventLoopBridge;
 use ReactParallel\EventLoop\KilledRuntime;
-use ReactParallel\Streams\RecvObservable;
+use ReactParallel\EventLoop\Metrics;
 use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
-use function Clue\React\Block\await;
+use WyriHaximus\Metrics\Configuration;
+use WyriHaximus\Metrics\InMemory\Registry;
 use function Clue\React\Block\awaitAll;
 use function parallel\run;
-use function React\Promise\all;
 use function sleep;
 
 /**
@@ -33,7 +32,7 @@ final class EventLoopBridgeTest extends AsyncTestCase
         $loop = Factory::create();
         $channels = [Channel::make($d . '_a', Channel::Infinite), Channel::make($d . '_b', Channel::Infinite)];
 
-        $eventLoopBridge = new EventLoopBridge($loop);
+        $eventLoopBridge = (new EventLoopBridge($loop))->withMetrics(Metrics::create(new Registry(Configuration::create())));
 
         $future = run(function () use ($channels): string {
             foreach (range(0, 13) as $i) {
@@ -81,7 +80,7 @@ final class EventLoopBridgeTest extends AsyncTestCase
         $loop = Factory::create();
         $channel = Channel::make($d . '_a', Channel::Infinite);
 
-        $eventLoopBridge = new EventLoopBridge($loop);
+        $eventLoopBridge = (new EventLoopBridge($loop))->withMetrics(Metrics::create(new Registry(Configuration::create())));
         $eventLoopBridge->observe($channel)->subscribe($this->expectCallableNever(), $this->expectCallableNever(), $this->expectCallableOnce());
 
         $loop->addTimer(1, function () use ($channel): void { $channel->close();});
@@ -99,7 +98,7 @@ final class EventLoopBridgeTest extends AsyncTestCase
         $future = run(fn () => sleep(3));
         assert($future instanceof Future);
 
-        $eventLoopBridge = new EventLoopBridge($loop);
+        $eventLoopBridge = (new EventLoopBridge($loop))->withMetrics(Metrics::create(new Registry(Configuration::create())));
 
         $loop->addTimer(1, function () use ($future): void { $future->cancel();});
         $this->await($eventLoopBridge->await($future)->then($this->expectCallableNever()), $loop, null);
@@ -114,10 +113,15 @@ final class EventLoopBridgeTest extends AsyncTestCase
 
         $loop = Factory::create();
         $runtime = new Runtime();
-        $future = $runtime->run(fn () => sleep(3));
+        $future = $runtime->run(static function (): int { /** @phpstan-ignore-line */
+            sleep(3);
+
+            return time();
+        });
+
         assert($future instanceof Future);
 
-        $eventLoopBridge = new EventLoopBridge($loop);
+        $eventLoopBridge = (new EventLoopBridge($loop))->withMetrics(Metrics::create(new Registry(Configuration::create())));
 
         $loop->addTimer(1, function () use ($runtime): void { $runtime->kill();});
         $this->await($eventLoopBridge->await($future)->then($this->expectCallableNever()), $loop, null);
@@ -136,7 +140,7 @@ final class EventLoopBridgeTest extends AsyncTestCase
 
         $loop->addTimer(1, function () use ($channel): void { $channel->send(new \Exception('nope'));});
 
-        $eventLoopBridge = new EventLoopBridge($loop);
+        $eventLoopBridge = (new EventLoopBridge($loop))->withMetrics(Metrics::create(new Registry(Configuration::create())));
 
         $this->await($eventLoopBridge->observe($channel)->toPromise()->then($this->expectCallableNever()), $loop, null);
     }
@@ -156,7 +160,7 @@ final class EventLoopBridgeTest extends AsyncTestCase
         });
         assert($future instanceof Future);
 
-        $eventLoopBridge = new EventLoopBridge($loop);
+        $eventLoopBridge = (new EventLoopBridge($loop))->withMetrics(Metrics::create(new Registry(Configuration::create())));
 
         $this->await($eventLoopBridge->await($future)->then($this->expectCallableNever()), $loop, null);
     }

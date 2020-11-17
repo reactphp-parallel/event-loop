@@ -13,6 +13,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Rx\Observable;
 use Rx\Subject\Subject;
+use WyriHaximus\Metrics\Label;
 
 use function count;
 use function spl_object_hash;
@@ -24,6 +25,8 @@ use const WyriHaximus\Constants\Numeric\ZERO;
 final class EventLoopBridge
 {
     private LoopInterface $loop;
+
+    private ?Metrics $metrics = null;
 
     private Events $events;
 
@@ -45,11 +48,23 @@ final class EventLoopBridge
         $this->events->setTimeout(ZERO);
     }
 
+    public function withMetrics(Metrics $metrics): self
+    {
+        $self          = clone $this;
+        $self->metrics = $metrics;
+
+        return $self;
+    }
+
     public function observe(Channel $channel): Observable
     {
         $subject                                   = new Subject();
         $this->channels[spl_object_hash($channel)] = $subject;
         $this->events->addChannel($channel);
+
+        if ($this->metrics instanceof Metrics) {
+            $this->metrics->channels()->gauge(new Label('state', 'active'))->incr();
+        }
 
         $this->startTimer();
 
@@ -62,6 +77,10 @@ final class EventLoopBridge
         $this->futures[spl_object_hash($future)] = $deferred;
         $this->events->addFuture(spl_object_hash($future), $future);
 
+        if ($this->metrics instanceof Metrics) {
+            $this->metrics->futures()->gauge(new Label('state', 'active'))->incr();
+        }
+
         $this->startTimer();
 
         return $deferred->promise();
@@ -73,25 +92,35 @@ final class EventLoopBridge
             return;
         }
 
+        if ($this->metrics instanceof Metrics) {
+            $this->metrics->timer()->counter(new Label('event', 'start'))->incr();
+        }
+
         // Call 1K times per second
         $this->timer       = $this->loop->addPeriodicTimer(0.001, function (): void {
+            $items = 0;
+
             try {
                 while ($event = $this->events->poll()) {
+                    $items++;
+                    /**
+                     * @phpstan-ignore-next-line
+                     */
                     switch ($event->type) {
                         case Events\Event\Type::Read:
-                            $this->handleReadEvent($event);
+                            $this->handleReadEvent($event); /** @phpstan-ignore-line */
                             break;
                         case Events\Event\Type::Close:
-                            $this->handleCloseEvent($event);
+                            $this->handleCloseEvent($event); /** @phpstan-ignore-line */
                             break;
                         case Events\Event\Type::Cancel:
-                            $this->handleCancelEvent($event);
+                            $this->handleCancelEvent($event); /** @phpstan-ignore-line */
                             break;
                         case Events\Event\Type::Kill:
-                            $this->handleKillEvent($event);
+                            $this->handleKillEvent($event); /** @phpstan-ignore-line */
                             break;
                         case Events\Event\Type::Error:
-                            $this->handleErrorEvent($event);
+                            $this->handleErrorEvent($event); /** @phpstan-ignore-line */
                             break;
                     }
                 }
@@ -101,6 +130,13 @@ final class EventLoopBridge
             }
 
             $this->stopTimer();
+
+            if (! ($this->metrics instanceof Metrics)) {
+                return;
+            }
+
+            $this->metrics->timer()->counter(new Label('event', 'tick'))->incr();
+            $this->metrics->timerItems()->counter(new Label('count', (string) $items))->incr();
         });
         $this->timerActive = TRUE_;
     }
@@ -113,6 +149,12 @@ final class EventLoopBridge
 
         $this->loop->cancelTimer($this->timer);
         $this->timerActive = FALSE_;
+
+        if (! ($this->metrics instanceof Metrics)) {
+            return;
+        }
+
+        $this->metrics->timer()->counter(new Label('event', 'stop'))->incr();
     }
 
     private function handleReadEvent(Events\Event $event): void
@@ -132,30 +174,68 @@ final class EventLoopBridge
     {
         $this->futures[spl_object_hash($event->object)]->resolve($event->value);
         unset($this->futures[spl_object_hash($event->object)]);
+
+        if (! ($this->metrics instanceof Metrics)) {
+            return;
+        }
+
+        $futures = $this->metrics->futures();
+        $futures->gauge(new Label('state', 'active'))->dcr();
+        $futures->gauge(new Label('state', 'resolve'))->incr();
     }
 
     private function handleChannelReadEvent(Events\Event $event): void
     {
         $this->channels[spl_object_hash($event->object)]->onNext($event->value);
-        $this->events->addChannel($event->object);
+        $this->events->addChannel($event->object); /** @phpstan-ignore-line */
+
+        if (! ($this->metrics instanceof Metrics)) {
+            return;
+        }
+
+        $this->metrics->channelMessages()->counter(new Label('event', 'read'))->incr();
     }
 
     private function handleCloseEvent(Events\Event $event): void
     {
         $this->channels[spl_object_hash($event->object)]->onCompleted();
         unset($this->channels[spl_object_hash($event->object)]);
+
+        if (! ($this->metrics instanceof Metrics)) {
+            return;
+        }
+
+        $channels = $this->metrics->channels();
+        $channels->gauge(new Label('state', 'active'))->dcr();
+        $channels->gauge(new Label('state', 'close'))->incr();
     }
 
     private function handleCancelEvent(Events\Event $event): void
     {
         $this->futures[spl_object_hash($event->object)]->reject(new CanceledFuture());
         unset($this->futures[spl_object_hash($event->object)]);
+
+        if (! ($this->metrics instanceof Metrics)) {
+            return;
+        }
+
+        $futures = $this->metrics->futures();
+        $futures->gauge(new Label('state', 'active'))->dcr();
+        $futures->gauge(new Label('state', 'cancel'))->incr();
     }
 
     private function handleKillEvent(Events\Event $event): void
     {
         $this->futures[spl_object_hash($event->object)]->reject(new KilledRuntime());
         unset($this->futures[spl_object_hash($event->object)]);
+
+        if (! ($this->metrics instanceof Metrics)) {
+            return;
+        }
+
+        $futures = $this->metrics->futures();
+        $futures->gauge(new Label('state', 'active'))->dcr();
+        $futures->gauge(new Label('state', 'kill'))->incr();
     }
 
     private function handleErrorEvent(Events\Event $event): void
@@ -166,5 +246,13 @@ final class EventLoopBridge
 
         $this->futures[spl_object_hash($event->object)]->reject($event->value);
         unset($this->futures[spl_object_hash($event->object)]);
+
+        if (! ($this->metrics instanceof Metrics)) {
+            return;
+        }
+
+        $futures = $this->metrics->futures();
+        $futures->gauge(new Label('state', 'active'))->dcr();
+        $futures->gauge(new Label('state', 'error'))->incr();
     }
 }
