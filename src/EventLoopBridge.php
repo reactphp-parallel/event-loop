@@ -24,6 +24,14 @@ use const WyriHaximus\Constants\Numeric\ZERO;
 
 final class EventLoopBridge
 {
+    private const DEFAULT_SCALE_RANGE = [
+        0.1,
+        0.01,
+        0.001,
+    ];
+
+    private const DEFAULT_SCALE_POSITION = 2;
+
     private LoopInterface $loop;
 
     private ?Metrics $metrics = null;
@@ -40,6 +48,11 @@ final class EventLoopBridge
     private array $futures = [];
 
     private bool $timerActive = FALSE_;
+
+    /** @var array<float> */
+    private array $scaleRange      = self::DEFAULT_SCALE_RANGE;
+    private int $scalePosition     = self::DEFAULT_SCALE_POSITION;
+    private int $scaleNoItemsCount = 0;
 
     public function __construct(LoopInterface $loop)
     {
@@ -96,8 +109,30 @@ final class EventLoopBridge
             $this->metrics->timer()->counter(new Label('event', 'start'))->incr();
         }
 
-        // Call 1K times per second
-        $this->timer       = $this->loop->addPeriodicTimer(0.001, function (): void {
+        $this->runTimer();
+
+        $this->timerActive = TRUE_;
+    }
+
+    private function stopTimer(): void
+    {
+        if (count($this->channels) !== ZERO || count($this->futures) !== ZERO) {
+            return;
+        }
+
+        $this->loop->cancelTimer($this->timer);
+        $this->timerActive = FALSE_;
+
+        if (! ($this->metrics instanceof Metrics)) {
+            return;
+        }
+
+        $this->metrics->timer()->counter(new Label('event', 'stop'))->incr();
+    }
+
+    private function runTimer(): void
+    {
+        $this->timer = $this->loop->addPeriodicTimer($this->scaleRange[$this->scalePosition], function (): void {
             $items = 0;
 
             try {
@@ -131,6 +166,30 @@ final class EventLoopBridge
 
             $this->stopTimer();
 
+            /** @phpstan-ignore-next-line */
+            if ($items > 0 && isset($this->scaleRange[$this->scalePosition + 1])) {
+                $this->loop->cancelTimer($this->timer);
+
+                $this->scalePosition++;
+                $this->runTimer();
+
+                $this->scaleNoItemsCount = 0;
+            }
+
+            if ($items === 0) {
+                $this->scaleNoItemsCount++;
+
+                /** @phpstan-ignore-next-line */
+                if ($this->scaleNoItemsCount > 10 && isset($this->scaleRange[$this->scalePosition - 1])) {
+                    $this->loop->cancelTimer($this->timer);
+
+                    $this->scalePosition--;
+                    $this->runTimer();
+
+                    $this->scaleNoItemsCount = 0;
+                }
+            }
+
             if (! ($this->metrics instanceof Metrics)) {
                 return;
             }
@@ -138,23 +197,6 @@ final class EventLoopBridge
             $this->metrics->timer()->counter(new Label('event', 'tick'))->incr();
             $this->metrics->timerItems()->counter(new Label('count', (string) $items))->incr();
         });
-        $this->timerActive = TRUE_;
-    }
-
-    private function stopTimer(): void
-    {
-        if (count($this->channels) !== ZERO || count($this->futures) !== ZERO) {
-            return;
-        }
-
-        $this->loop->cancelTimer($this->timer);
-        $this->timerActive = FALSE_;
-
-        if (! ($this->metrics instanceof Metrics)) {
-            return;
-        }
-
-        $this->metrics->timer()->counter(new Label('event', 'stop'))->incr();
     }
 
     private function handleReadEvent(Events\Event $event): void
