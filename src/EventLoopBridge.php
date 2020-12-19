@@ -25,8 +25,10 @@ use const WyriHaximus\Constants\Numeric\ZERO;
 final class EventLoopBridge
 {
     private const DEFAULT_SCALE_RANGE = [
-        0.1,
         0.01,
+        0.0075,
+        0.0050,
+        0.0025,
         0.001,
     ];
 
