@@ -19,7 +19,7 @@
         "wyrihaximus/metrics": "^1.0"
     },
     "require-dev": {
-        "wyrihaximus/async-test-utilities": "^3.3"
+        "wyrihaximus/async-test-utilities": "^3.4"
     },
     "config": {
         "platform": {
