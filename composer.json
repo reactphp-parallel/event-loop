@@ -12,7 +12,7 @@
     "require": {
         "php": "^7.4",
         "ext-parallel": "*",
-        "react/event-loop": "^1.1",
+        "react/event-loop": "^1.4",
         "react/promise": "^2.7",
         "reactivex/rxphp": "^2.0",
         "wyrihaximus/constants": "^1.6.0",
