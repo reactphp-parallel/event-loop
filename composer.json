@@ -10,27 +10,18 @@
         }
     ],
     "require": {
-        "php": "^7.4",
+        "php": "^8.2",
         "ext-parallel": "*",
-        "react/event-loop": "^1.1",
-        "react/promise": "^2.7",
-        "reactivex/rxphp": "^2.0",
+        "react/async": "^4.2",
+        "react/event-loop": "^1.5",
+        "react/promise": "^2.11",
+        "reactivex/rxphp": "^2.0.12",
         "wyrihaximus/constants": "^1.6.0",
-        "wyrihaximus/metrics": "^1.0"
+        "wyrihaximus/metrics": "^1.0 || ^2",
+        "wyrihaximus/react-awaitable-observable": "^1.1"
     },
     "require-dev": {
-        "wyrihaximus/async-test-utilities": "^3.4"
-    },
-    "config": {
-        "platform": {
-            "php": "7.4.7"
-        },
-        "sort-packages": true
-    },
-    "extra": {
-        "unused": [
-            "ext-parallel"
-        ]
+        "wyrihaximus/async-test-utilities": "^7.2"
     },
     "autoload": {
         "psr-4": {
@@ -42,8 +33,18 @@
             "ReactParallel\\Tests\\EventLoop\\": "tests/"
         }
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "ergebnis/composer-normalize": true,
+            "icanhazstring/composer-unused": true,
+            "infection/extension-installer": true
+        },
+        "platform": {
+            "php": "8.2.13"
+        },
+        "sort-packages": true
+    },
     "scripts": {
         "post-install-cmd": [
             "composer normalize"

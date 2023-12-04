@@ -7,19 +7,18 @@ namespace ReactParallel\EventLoop;
 use parallel\Channel;
 use parallel\Events;
 use parallel\Future;
-use React\EventLoop\LoopInterface;
+use React\EventLoop\Loop;
 use React\EventLoop\TimerInterface;
 use React\Promise\Deferred;
-use React\Promise\PromiseInterface;
-use Rx\Observable;
 use Rx\Subject\Subject;
 use WyriHaximus\Metrics\Label;
 
 use function count;
+use function React\Async\await;
 use function spl_object_hash;
+use function spl_object_id;
+use function WyriHaximus\React\awaitObservable;
 
-use const WyriHaximus\Constants\Boolean\FALSE_;
-use const WyriHaximus\Constants\Boolean\TRUE_;
 use const WyriHaximus\Constants\Numeric\ZERO;
 
 final class EventLoopBridge
@@ -34,31 +33,26 @@ final class EventLoopBridge
 
     private const DEFAULT_SCALE_POSITION = 2;
 
-    private LoopInterface $loop;
+    private Metrics|null $metrics = null;
 
-    private ?Metrics $metrics = null;
-
+    /** @var Events<Events\Event> */
     private Events $events;
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
-    private TimerInterface $timer;
+    private TimerInterface|null $timer = null;
 
-    /** @var array<string, Subject> */
+    /** @var array<int, Subject> */
     private array $channels = [];
 
-    /** @var array<string, Deferred> */
+    /** @var array<int, Deferred> */
     private array $futures = [];
-
-    private bool $timerActive = FALSE_;
 
     /** @var array<float> */
     private array $scaleRange      = self::DEFAULT_SCALE_RANGE;
     private int $scalePosition     = self::DEFAULT_SCALE_POSITION;
     private int $scaleNoItemsCount = 0;
 
-    public function __construct(LoopInterface $loop)
+    public function __construct()
     {
-        $this->loop   = $loop;
         $this->events = new Events();
         $this->events->setTimeout(ZERO);
     }
@@ -71,10 +65,11 @@ final class EventLoopBridge
         return $self;
     }
 
-    public function observe(Channel $channel): Observable
+    /** @return iterable<mixed> */
+    public function observe(Channel $channel): iterable
     {
-        $subject                                   = new Subject();
-        $this->channels[spl_object_hash($channel)] = $subject;
+        $subject                                 = new Subject();
+        $this->channels[spl_object_id($channel)] = $subject;
         $this->events->addChannel($channel);
 
         if ($this->metrics instanceof Metrics) {
@@ -83,13 +78,13 @@ final class EventLoopBridge
 
         $this->startTimer();
 
-        return $subject;
+        return awaitObservable($subject);
     }
 
-    public function await(Future $future): PromiseInterface
+    public function await(Future $future): mixed
     {
-        $deferred                                = new Deferred();
-        $this->futures[spl_object_hash($future)] = $deferred;
+        $deferred                              = new Deferred();
+        $this->futures[spl_object_id($future)] = $deferred;
         $this->events->addFuture(spl_object_hash($future), $future);
 
         if ($this->metrics instanceof Metrics) {
@@ -98,12 +93,13 @@ final class EventLoopBridge
 
         $this->startTimer();
 
-        return $deferred->promise();
+        /** @phpstan-ignore-next-line */
+        return await($deferred->promise());
     }
 
     private function startTimer(): void
     {
-        if ($this->timerActive) {
+        if ($this->timer !== null) {
             return;
         }
 
@@ -112,18 +108,16 @@ final class EventLoopBridge
         }
 
         $this->runTimer();
-
-        $this->timerActive = TRUE_;
     }
 
     private function stopTimer(): void
     {
-        if (count($this->channels) !== ZERO || count($this->futures) !== ZERO) {
+        if ($this->timer === null || count($this->channels) !== ZERO || count($this->futures) !== ZERO) {
             return;
         }
 
-        $this->loop->cancelTimer($this->timer);
-        $this->timerActive = FALSE_;
+        Loop::cancelTimer($this->timer);
+        $this->timer = null;
 
         if (! ($this->metrics instanceof Metrics)) {
             return;
@@ -134,34 +128,32 @@ final class EventLoopBridge
 
     private function runTimer(): void
     {
-        $this->timer = $this->loop->addPeriodicTimer($this->scaleRange[$this->scalePosition], function (): void {
-            $items = 0;
+        $this->timer = Loop::addPeriodicTimer($this->scaleRange[$this->scalePosition], function (): void {
+            $items = ZERO;
 
             try {
                 while ($event = $this->events->poll()) {
                     $items++;
-                    /**
-                     * @phpstan-ignore-next-line
-                     */
+                    /** @phpstan-ignore-next-line */
                     switch ($event->type) {
                         case Events\Event\Type::Read:
-                            $this->handleReadEvent($event); /** @phpstan-ignore-line */
+                            $this->handleReadEvent($event);
                             break;
                         case Events\Event\Type::Close:
-                            $this->handleCloseEvent($event); /** @phpstan-ignore-line */
+                            $this->handleCloseEvent($event);
                             break;
                         case Events\Event\Type::Cancel:
-                            $this->handleCancelEvent($event); /** @phpstan-ignore-line */
+                            $this->handleCancelEvent($event);
                             break;
                         case Events\Event\Type::Kill:
-                            $this->handleKillEvent($event); /** @phpstan-ignore-line */
+                            $this->handleKillEvent($event);
                             break;
                         case Events\Event\Type::Error:
-                            $this->handleErrorEvent($event); /** @phpstan-ignore-line */
+                            $this->handleErrorEvent($event);
                             break;
                     }
                 }
-            } catch (Events\Error\Timeout $timeout) {
+            } catch (Events\Error\Timeout) {
                 // Catch and ignore this exception as it will trigger when events::poll() will have nothing for us
                 // @ignoreException
             }
@@ -169,26 +161,32 @@ final class EventLoopBridge
             $this->stopTimer();
 
             /** @phpstan-ignore-next-line */
-            if ($items > 0 && isset($this->scaleRange[$this->scalePosition + 1])) {
-                $this->loop->cancelTimer($this->timer);
+            if ($items > ZERO && isset($this->scaleRange[$this->scalePosition + 1])) {
+                if ($this->timer instanceof TimerInterface) {
+                    Loop::cancelTimer($this->timer);
+                    $this->timer = null;
+                }
 
                 $this->scalePosition++;
                 $this->runTimer();
 
-                $this->scaleNoItemsCount = 0;
+                $this->scaleNoItemsCount = ZERO;
             }
 
-            if ($items === 0) {
+            if ($items === ZERO) {
                 $this->scaleNoItemsCount++;
 
                 /** @phpstan-ignore-next-line */
                 if ($this->scaleNoItemsCount > 10 && isset($this->scaleRange[$this->scalePosition - 1])) {
-                    $this->loop->cancelTimer($this->timer);
+                    if ($this->timer instanceof TimerInterface) {
+                        Loop::cancelTimer($this->timer);
+                        $this->timer = null;
+                    }
 
                     $this->scalePosition--;
                     $this->runTimer();
 
-                    $this->scaleNoItemsCount = 0;
+                    $this->scaleNoItemsCount = ZERO;
                 }
             }
 
@@ -216,8 +214,8 @@ final class EventLoopBridge
 
     private function handleFutureReadEvent(Events\Event $event): void
     {
-        $this->futures[spl_object_hash($event->object)]->resolve($event->value);
-        unset($this->futures[spl_object_hash($event->object)]);
+        $this->futures[spl_object_id($event->object)]->resolve($event->value);
+        unset($this->futures[spl_object_id($event->object)]);
 
         if (! ($this->metrics instanceof Metrics)) {
             return;
@@ -230,7 +228,7 @@ final class EventLoopBridge
 
     private function handleChannelReadEvent(Events\Event $event): void
     {
-        $this->channels[spl_object_hash($event->object)]->onNext($event->value);
+        $this->channels[spl_object_id($event->object)]->onNext($event->value);
         $this->events->addChannel($event->object); /** @phpstan-ignore-line */
 
         if (! ($this->metrics instanceof Metrics)) {
@@ -242,8 +240,8 @@ final class EventLoopBridge
 
     private function handleCloseEvent(Events\Event $event): void
     {
-        $this->channels[spl_object_hash($event->object)]->onCompleted();
-        unset($this->channels[spl_object_hash($event->object)]);
+        $this->channels[spl_object_id($event->object)]->onCompleted();
+        unset($this->channels[spl_object_id($event->object)]);
 
         if (! ($this->metrics instanceof Metrics)) {
             return;
@@ -256,8 +254,8 @@ final class EventLoopBridge
 
     private function handleCancelEvent(Events\Event $event): void
     {
-        $this->futures[spl_object_hash($event->object)]->reject(new CanceledFuture());
-        unset($this->futures[spl_object_hash($event->object)]);
+        $this->futures[spl_object_id($event->object)]->reject(new CanceledFuture());
+        unset($this->futures[spl_object_id($event->object)]);
 
         if (! ($this->metrics instanceof Metrics)) {
             return;
@@ -270,8 +268,8 @@ final class EventLoopBridge
 
     private function handleKillEvent(Events\Event $event): void
     {
-        $this->futures[spl_object_hash($event->object)]->reject(new KilledRuntime());
-        unset($this->futures[spl_object_hash($event->object)]);
+        $this->futures[spl_object_id($event->object)]->reject(new KilledRuntime());
+        unset($this->futures[spl_object_id($event->object)]);
 
         if (! ($this->metrics instanceof Metrics)) {
             return;
@@ -288,8 +286,8 @@ final class EventLoopBridge
             return;
         }
 
-        $this->futures[spl_object_hash($event->object)]->reject($event->value);
-        unset($this->futures[spl_object_hash($event->object)]);
+        $this->futures[spl_object_id($event->object)]->reject($event->value);
+        unset($this->futures[spl_object_id($event->object)]);
 
         if (! ($this->metrics instanceof Metrics)) {
             return;
