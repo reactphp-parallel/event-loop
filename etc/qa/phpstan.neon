@@ -1,11 +1,21 @@
 parameters:
 	level: max
-	ergebnis:
-		noExtends:
-			classesAllowedToBeExtended:
-				- ReactParallel\EventLoop\CancelledException
-				- ReactParallel\EventLoop\CanceledFuture
-				- ReactParallel\EventLoop\KilledRuntime
+	ignoreErrors:
+		-
+			message: '#Result of method ReactParallel\\EventLoop\\EventLoopBridge::await\(\) \(void\) is used.#'
+			path: ../../tests/Types.php
+#	ergebnis:
+#		noExtends:
+#			classesAllowedToBeExtended:
+#				- ReactParallel\EventLoop\CancelledException
+#				- ReactParallel\EventLoop\CanceledFuture
+#				- ReactParallel\EventLoop\KilledRuntime
+	stubFiles:
+		- ../../stubs/Event.stub
+#		- ../../stubs/Events.stub
+		- ../../stubs/Future.stub
+		- ../../stubs/Channel.stub
+		- ../../stubs/functions.stub
 
-includes:
-	- ../../vendor/wyrihaximus/async-test-utilities/rules.neon
+#includes:
+#	- ../../vendor/wyrihaximus/async-test-utilities/rules.neon

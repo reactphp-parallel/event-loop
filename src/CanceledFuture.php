@@ -6,7 +6,6 @@ namespace ReactParallel\EventLoop;
 
 use Exception;
 
-/** @phpstan-ignore-next-line */
 final class CanceledFuture extends Exception
 {
 }
