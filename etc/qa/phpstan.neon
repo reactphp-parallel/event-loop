@@ -6,6 +6,10 @@ parameters:
 				- ReactParallel\EventLoop\CancelledException
 				- ReactParallel\EventLoop\CanceledFuture
 				- ReactParallel\EventLoop\KilledRuntime
+	stubFiles:
+		- ../../stubs/Event.stub
+		- ../../stubs/Future.stub
+		- ../../stubs/Channel.stub
 
 includes:
 	- ../../vendor/wyrihaximus/async-test-utilities/rules.neon

@@ -76,7 +76,6 @@ final class EventLoopBridgeTest extends AsyncTestCase
 
         $promises[] = resolve($eventLoopBridge->await($future));
 
-        /** @phpstan-ignore-next-line */
         $rd = await(all($promises));
 
         $range = [];
