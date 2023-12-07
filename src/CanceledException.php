@@ -7,6 +7,6 @@ namespace ReactParallel\EventLoop;
 use Exception;
 
 /** @phpstan-ignore-next-line */
-final class KilledRuntime extends Exception
+final class CanceledException extends Exception
 {
 }

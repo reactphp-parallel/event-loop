@@ -1,10 +1,11 @@
 parameters:
-	checkMissingIterableValueType: false
-	ignoreErrors:
-	    - '#Function sleep is unsafe to use.#'
-	    - '#Do not throw the \\Exception base class. Instead, extend the \\Exception base class.#'
+	level: max
 	ergebnis:
-		classesAllowedToBeExtended:
-			- Exception
+		noExtends:
+			classesAllowedToBeExtended:
+				- ReactParallel\EventLoop\CancelledException
+				- ReactParallel\EventLoop\CanceledFuture
+				- ReactParallel\EventLoop\KilledRuntime
+
 includes:
 	- ../../vendor/wyrihaximus/async-test-utilities/rules.neon

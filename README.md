@@ -3,7 +3,6 @@
 ![Continuous Integration](https://github.com/Reactphp-parallel/event-loop/workflows/Continuous%20Integration/badge.svg)
 [![Latest Stable Version](https://poser.pugx.org/React-parallel/event-loop/v/stable.png)](https://packagist.org/packages/React-parallel/event-loop)
 [![Total Downloads](https://poser.pugx.org/React-parallel/event-loop/downloads.png)](https://packagist.org/packages/React-parallel/event-loop)
-[![Code Coverage](https://scrutinizer-ci.com/g/Reactphp-parallel/event-loop/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/Reactphp-parallel/event-loop/?branch=master)
 [![Type Coverage](https://shepherd.dev/github/Reactphp-parallel/event-loop/coverage.svg)](https://shepherd.dev/github/Reactphp-parallel/event-loop)
 [![License](https://poser.pugx.org/React-parallel/event-loop/license.png)](https://packagist.org/packages/React-parallel/event-loop)
 
@@ -12,16 +11,16 @@
 To install via [Composer](http://getcomposer.org/), use the command below, it will automatically detect the latest version and bind it with `~`.
 
 ```
-composer require react-parallel/event-loop 
+composer require react-parallel/event-loop
 ```
 
 # Usage
 
 ## Set up
 
-Just like the ReactPHP event loop, you should only have one bridge. You can have multiple, and unlike the ReactPHP 
-event loop, that will work, but it adds additional overhead when you have more than a few. Having a hand full for 
-different major contexts. Share this bridge around so that other packages can use them, and only have one instance 
+Just like the ReactPHP event loop, you should only have one bridge. You can have multiple, and unlike the ReactPHP
+event loop, that will work, but it adds additional overhead when you have more than a few. Having a hand full for
+different major contexts. Share this bridge around so that other packages can use them, and only have one instance
 checking for events.
 
 ```php
@@ -61,7 +60,7 @@ $loop->run();
 
 ## Futures
 
-Where promises are push, futures are pull, as such the event loop will poll and resolve the promise once a result is 
+Where promises are push, futures are pull, as such the event loop will poll and resolve the promise once a result is
 available.
 
 ```php
@@ -106,7 +105,7 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## License ##
 
-Copyright 2020 [Cees-Jan Kiewiet](http://wyrihaximus.net/)
+Copyright 2024 [Cees-Jan Kiewiet](http://wyrihaximus.net/)
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
