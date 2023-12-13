@@ -18,7 +18,8 @@
         "reactivex/rxphp": "^2.0.12",
         "wyrihaximus/constants": "^1.6.0",
         "wyrihaximus/metrics": "^1.0 || ^2",
-        "wyrihaximus/react-awaitable-observable": "^1.1"
+        "wyrihaximus/react-awaitable-observable": "^1.1",
+        "wyrihaximus/react-event-loop-rx-scheduler-hook-up": "^0.1.1"
     },
     "require-dev": {
         "wyrihaximus/async-test-utilities": "^7.2"
