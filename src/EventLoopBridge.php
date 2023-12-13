@@ -6,6 +6,7 @@ namespace ReactParallel\EventLoop;
 
 use parallel\Channel;
 use parallel\Events;
+use parallel\Events\Event;
 use parallel\Future;
 use React\EventLoop\Loop;
 use React\EventLoop\TimerInterface;
@@ -35,21 +36,30 @@ final class EventLoopBridge
 
     private Metrics|null $metrics = null;
 
-    /** @var Events<Events\Event> */
+    /**
+     * @template T
+     * @var Events<Events\Event<T>>
+     */
     private Events $events;
 
     private TimerInterface|null $timer = null;
 
-    /** @var array<int, Subject> */
+    /**
+     * @template T
+     * @var array<int, Subject<T>>
+     */
     private array $channels = [];
 
-    /** @var array<int, Deferred> */
+    /**
+     * @template T
+     * @var array<int, Deferred<T>>
+     */
     private array $futures = [];
 
     /** @var array<float> */
     private array $scaleRange      = self::DEFAULT_SCALE_RANGE;
     private int $scalePosition     = self::DEFAULT_SCALE_POSITION;
-    private int $scaleNoItemsCount = 0;
+    private int $scaleNoItemsCount = ZERO;
 
     public function __construct()
     {
@@ -65,9 +75,16 @@ final class EventLoopBridge
         return $self;
     }
 
-    /** @return iterable<mixed> */
+    /**
+     * @param Channel<T> $channel
+     *
+     * @return iterable<T>
+     *
+     * @template T
+     */
     public function observe(Channel $channel): iterable
     {
+        /** @var Subject<T> $subject */
         $subject                                 = new Subject();
         $this->channels[spl_object_id($channel)] = $subject;
         $this->events->addChannel($channel);
@@ -81,8 +98,16 @@ final class EventLoopBridge
         return awaitObservable($subject);
     }
 
+    /**
+     * @param Future<T> $futurea
+     *
+     * @return T
+     *
+     * @template T
+     */
     public function await(Future $future): mixed
     {
+        /** @var Deferred<T> $deferred */
         $deferred                              = new Deferred();
         $this->futures[spl_object_id($future)] = $deferred;
         $this->events->addFuture(spl_object_hash($future), $future);
@@ -93,7 +118,6 @@ final class EventLoopBridge
 
         $this->startTimer();
 
-        /** @phpstan-ignore-next-line */
         return await($deferred->promise());
     }
 
@@ -199,6 +223,11 @@ final class EventLoopBridge
         });
     }
 
+    /**
+     * @param Event<T> $event
+     *
+     * @template T
+     */
     private function handleReadEvent(Events\Event $event): void
     {
         if ($event->object instanceof Future) {
@@ -212,6 +241,11 @@ final class EventLoopBridge
         $this->handleChannelReadEvent($event);
     }
 
+    /**
+     * @param Events\Event<T> $event
+     *
+     * @template T
+     */
     private function handleFutureReadEvent(Events\Event $event): void
     {
         $this->futures[spl_object_id($event->object)]->resolve($event->value);
@@ -226,6 +260,11 @@ final class EventLoopBridge
         $futures->gauge(new Label('state', 'resolve'))->incr();
     }
 
+    /**
+     * @param Events\Event<T> $event
+     *
+     * @template T
+     */
     private function handleChannelReadEvent(Events\Event $event): void
     {
         $this->channels[spl_object_id($event->object)]->onNext($event->value);
@@ -238,6 +277,11 @@ final class EventLoopBridge
         $this->metrics->channelMessages()->counter(new Label('event', 'read'))->incr();
     }
 
+    /**
+     * @param Events\Event<T> $event
+     *
+     * @template T
+     */
     private function handleCloseEvent(Events\Event $event): void
     {
         $this->channels[spl_object_id($event->object)]->onCompleted();
@@ -252,6 +296,11 @@ final class EventLoopBridge
         $channels->gauge(new Label('state', 'close'))->incr();
     }
 
+    /**
+     * @param Events\Event<T> $event
+     *
+     * @template T
+     */
     private function handleCancelEvent(Events\Event $event): void
     {
         $this->futures[spl_object_id($event->object)]->reject(new CanceledFuture());
@@ -266,6 +315,11 @@ final class EventLoopBridge
         $futures->gauge(new Label('state', 'cancel'))->incr();
     }
 
+    /**
+     * @param Events\Event<T> $event
+     *
+     * @template T
+     */
     private function handleKillEvent(Events\Event $event): void
     {
         $this->futures[spl_object_id($event->object)]->reject(new KilledRuntime());
@@ -280,6 +334,11 @@ final class EventLoopBridge
         $futures->gauge(new Label('state', 'kill'))->incr();
     }
 
+    /**
+     * @param Events\Event<T> $event
+     *
+     * @template T
+     */
     private function handleErrorEvent(Events\Event $event): void
     {
         if (! ($event->object instanceof Future)) {
