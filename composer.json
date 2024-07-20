@@ -10,7 +10,7 @@
         }
     ],
     "require": {
-        "php": "^8.2",
+        "php": "^8.1",
         "ext-parallel": "*",
         "react/async": "^4.2",
         "react/event-loop": "^1.5",
@@ -18,11 +18,11 @@
         "reactivex/rxphp": "^2.0.12",
         "wyrihaximus/constants": "^1.6.0",
         "wyrihaximus/metrics": "^1.0 || ^2",
-        "wyrihaximus/react-awaitable-observable": "^1.1",
+        "wyrihaximus/react-awaitable-observable": "^1",
         "wyrihaximus/react-event-loop-rx-scheduler-hook-up": "^0.1.1"
     },
     "require-dev": {
-        "wyrihaximus/async-test-utilities": "^7.2"
+        "wyrihaximus/async-test-utilities": "^7.2 || ^5"
     },
     "autoload": {
         "psr-4": {
@@ -42,7 +42,7 @@
             "infection/extension-installer": true
         },
         "platform": {
-            "php": "8.2.13"
+            "php": "8.1.13"
         },
         "sort-packages": true
     },
