@@ -10,14 +10,12 @@ use parallel\Future;
 use React\EventLoop\Loop;
 use React\EventLoop\TimerInterface;
 use React\Promise\Deferred;
-use Rx\Subject\Subject;
 use WyriHaximus\Metrics\Label;
 
 use function count;
 use function React\Async\await;
 use function spl_object_hash;
 use function spl_object_id;
-use function WyriHaximus\React\awaitObservable;
 
 use const WyriHaximus\Constants\Numeric\ZERO;
 
@@ -40,7 +38,7 @@ final class EventLoopBridge
 
     private TimerInterface|null $timer = null;
 
-    /** @var array<int, Subject> */
+    /** @var array<int, Stream> */
     private array $channels = [];
 
     /** @var array<int, Deferred> */
@@ -68,8 +66,7 @@ final class EventLoopBridge
     /** @return iterable<mixed> */
     public function observe(Channel $channel): iterable
     {
-        $subject                                 = new Subject();
-        $this->channels[spl_object_id($channel)] = $subject;
+        $this->channels[spl_object_id($channel)] = new Stream();
         $this->events->addChannel($channel);
 
         if ($this->metrics instanceof Metrics) {
@@ -78,7 +75,7 @@ final class EventLoopBridge
 
         $this->startTimer();
 
-        return awaitObservable($subject);
+        yield from $this->channels[spl_object_id($channel)]->iterable();
     }
 
     public function await(Future $future): mixed
@@ -228,7 +225,7 @@ final class EventLoopBridge
 
     private function handleChannelReadEvent(Events\Event $event): void
     {
-        $this->channels[spl_object_id($event->object)]->onNext($event->value);
+        $this->channels[spl_object_id($event->object)]->value($event->value);
         $this->events->addChannel($event->object); /** @phpstan-ignore-line */
 
         if (! ($this->metrics instanceof Metrics)) {
@@ -240,7 +237,7 @@ final class EventLoopBridge
 
     private function handleCloseEvent(Events\Event $event): void
     {
-        $this->channels[spl_object_id($event->object)]->onCompleted();
+        $this->channels[spl_object_id($event->object)]->done();
         unset($this->channels[spl_object_id($event->object)]);
 
         if (! ($this->metrics instanceof Metrics)) {
