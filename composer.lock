@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "726ced98242b2202f7b26f2356a9cd8b",
+    "content-hash": "e972e1ad02dbc63b039ee95fe8067c31",
     "packages": [
         {
             "name": "lcobucci/clock",
@@ -343,74 +343,6 @@
             "time": "2023-11-16T16:16:50+00:00"
         },
         {
-            "name": "reactivex/rxphp",
-            "version": "2.0.12",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/ReactiveX/RxPHP.git",
-                "reference": "eee8eb20ec310632d0356ff1bcaccf5c90094ba6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/ReactiveX/RxPHP/zipball/eee8eb20ec310632d0356ff1bcaccf5c90094ba6",
-                "reference": "eee8eb20ec310632d0356ff1bcaccf5c90094ba6",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7.0.0",
-                "react/promise": "^3 || ~2.2"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^8.5 || ^9",
-                "react/event-loop": "^1.0 || ^0.5 || ^0.4.2",
-                "satooshi/php-coveralls": "~1.0"
-            },
-            "suggest": {
-                "react/event-loop": "Used for scheduling async operations"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.0-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Rx\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Alexander",
-                    "email": "iam.asm89@gmail.com"
-                },
-                {
-                    "name": "David Dan",
-                    "email": "davidwdan@gmail.com"
-                },
-                {
-                    "name": "Matt Bonneau",
-                    "email": "matt@bonneau.net"
-                }
-            ],
-            "description": "Reactive extensions for php.",
-            "homepage": "https://github.com/ReactiveX/RxPHP",
-            "keywords": [
-                "extensions",
-                "reactive",
-                "rx"
-            ],
-            "support": {
-                "issues": "https://github.com/ReactiveX/RxPHP/issues",
-                "source": "https://github.com/ReactiveX/RxPHP/tree/2.0.12"
-            },
-            "time": "2023-11-27T16:37:30+00:00"
-        },
-        {
             "name": "thecodingmachine/safe",
             "version": "v1.3.3",
             "source": {
@@ -654,115 +586,6 @@
                 }
             ],
             "time": "2021-11-10T16:03:58+00:00"
-        },
-        {
-            "name": "wyrihaximus/react-awaitable-observable",
-            "version": "1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/WyriHaximus/reactphp-awaitable-observable.git",
-                "reference": "d8423f506342f15d4c30a4da404bd25f457caddb"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/reactphp-awaitable-observable/zipball/d8423f506342f15d4c30a4da404bd25f457caddb",
-                "reference": "d8423f506342f15d4c30a4da404bd25f457caddb",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^8.1",
-                "react/async": "^4",
-                "react/promise": "^2.9",
-                "reactivex/rxphp": "^2.0.10"
-            },
-            "require-dev": {
-                "wyrihaximus/async-test-utilities": "^5.0.11"
-            },
-            "type": "library",
-            "autoload": {
-                "files": [
-                    "src/functions_include.php"
-                ],
-                "psr-4": {
-                    "WyriHaximus\\React\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Cees-Jan Kiewiet",
-                    "email": "ceesjank@gmail.com"
-                }
-            ],
-            "description": "🛠️ Make observables foreachable using async &amp; await",
-            "support": {
-                "issues": "https://github.com/WyriHaximus/reactphp-awaitable-observable/issues",
-                "source": "https://github.com/WyriHaximus/reactphp-awaitable-observable/tree/1.0.0"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/WyriHaximus",
-                    "type": "github"
-                }
-            ],
-            "time": "2022-08-11T13:15:09+00:00"
-        },
-        {
-            "name": "wyrihaximus/react-event-loop-rx-scheduler-hook-up",
-            "version": "0.1.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/WyriHaximus/reactphp-event-loop-rx-scheduler-hook-up.git",
-                "reference": "462e794cba3c810b77d1e8cb33be43a902673272"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/reactphp-event-loop-rx-scheduler-hook-up/zipball/462e794cba3c810b77d1e8cb33be43a902673272",
-                "reference": "462e794cba3c810b77d1e8cb33be43a902673272",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^8.1",
-                "react/event-loop": "^1.3",
-                "reactivex/rxphp": "^2.0"
-            },
-            "conflict": {
-                "azjezz/psl": "<2"
-            },
-            "require-dev": {
-                "wyrihaximus/async-test-utilities": "^5.0.25"
-            },
-            "type": "library",
-            "extra": {
-                "unused": [
-                    "wyrihaximus/react-mutex",
-                    "wyrihaximus/react-mutex-contracts"
-                ]
-            },
-            "autoload": {
-                "files": [
-                    "src/bootstrap.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "description": "🪝 Hook up ReactPHP Event Loop to the RxPHP Scheduler",
-            "support": {
-                "issues": "https://github.com/WyriHaximus/reactphp-event-loop-rx-scheduler-hook-up/issues",
-                "source": "https://github.com/WyriHaximus/reactphp-event-loop-rx-scheduler-hook-up/tree/0.1.1"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/WyriHaximus",
-                    "type": "github"
-                }
-            ],
-            "time": "2023-02-26T15:05:42+00:00"
         }
     ],
     "packages-dev": [
@@ -10003,14 +9826,14 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.1",
         "ext-parallel": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.1.13"
     },
