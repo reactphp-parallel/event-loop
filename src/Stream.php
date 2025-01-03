@@ -9,18 +9,27 @@ use SplQueue;
 
 use function React\Async\await;
 
-final class Stream
+/**
+ * @template T
+ * @template-implements StreamInterface<T>
+ */
+final class Stream implements StreamInterface
 {
+    /** @var SplQueue<T> */
     private SplQueue $queue;
+
+    /** @var Deferred<Value|Done> */
     private Deferred $wait;
 
     public function __construct()
     {
         $this->queue = new SplQueue();
         $this->queue->setIteratorMode(SplQueue::IT_MODE_DELETE);
+        /** @psalm-suppress MixedPropertyTypeCoercion */
         $this->wait = new Deferred();
     }
 
+    /** @param T $value */
     public function value(mixed $value): void
     {
         $this->queue->enqueue($value);
@@ -32,11 +41,11 @@ final class Stream
         $this->wait->resolve(new Done());
     }
 
-    /** @return iterable<mixed> */
+    /** @return iterable<T> */
     public function iterable(): iterable
     {
-        do {
-            $run  = false;
+        for (;;) {
+            /** @psalm-suppress MixedAssignment */
             $type = await($this->wait->promise());
 
             foreach ($this->queue as $value) {
@@ -44,11 +53,11 @@ final class Stream
             }
 
             if ($type instanceof Done) {
-                continue;
+                break;
             }
 
+            /** @psalm-suppress MixedPropertyTypeCoercion */
             $this->wait = new Deferred();
-            $run        = true;
-        } while ($run);
+        }
     }
 }

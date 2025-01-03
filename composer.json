@@ -14,12 +14,12 @@
         "ext-parallel": "*",
         "react/async": "^4.2",
         "react/event-loop": "^1.5",
-        "react/promise": "^2.11 || ^3.0",
+        "react/promise": "^2.11 || ^3.2",
         "wyrihaximus/constants": "^1.6.0",
-        "wyrihaximus/metrics": "^1.0 || ^2"
+        "wyrihaximus/metrics": "^2.1"
     },
     "require-dev": {
-        "wyrihaximus/async-test-utilities": "^7.2 || ^5"
+        "wyrihaximus/async-test-utilities": "^5.0.25 || ^8.0.5"
     },
     "autoload": {
         "psr-4": {

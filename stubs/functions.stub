@@ -1,0 +1,13 @@
+<?php
+
+namespace parallel;
+
+use Closure;
+
+/**
+ * @param (Closure():T)|(Closure():void) $task
+ * @param array<mixed>                   $argv
+ * @template T
+ * @return ($task is (Closure():T) ? Future<T> : null)
+ */
+function run(Closure $task, array $argv = null): ?Future {}

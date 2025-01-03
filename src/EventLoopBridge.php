@@ -6,10 +6,12 @@ namespace ReactParallel\EventLoop;
 
 use parallel\Channel;
 use parallel\Events;
+use parallel\Events\Event;
 use parallel\Future;
 use React\EventLoop\Loop;
 use React\EventLoop\TimerInterface;
 use React\Promise\Deferred;
+use Throwable;
 use WyriHaximus\Metrics\Label;
 
 use function count;
@@ -19,6 +21,7 @@ use function spl_object_id;
 
 use const WyriHaximus\Constants\Numeric\ZERO;
 
+/** @psalm-suppress TooManyTemplateParams */
 final class EventLoopBridge
 {
     private const DEFAULT_SCALE_RANGE = [
@@ -33,21 +36,21 @@ final class EventLoopBridge
 
     private Metrics|null $metrics = null;
 
-    /** @var Events<Events\Event> */
+    /** @var Events<mixed> */
     private Events $events;
 
     private TimerInterface|null $timer = null;
 
-    /** @var array<int, Stream> */
+    /** @var array<int, StreamInterface<mixed>> */
     private array $channels = [];
 
-    /** @var array<int, Deferred> */
+    /** @var array<int, Deferred<mixed>> */
     private array $futures = [];
 
     /** @var array<float> */
     private array $scaleRange      = self::DEFAULT_SCALE_RANGE;
     private int $scalePosition     = self::DEFAULT_SCALE_POSITION;
-    private int $scaleNoItemsCount = 0;
+    private int $scaleNoItemsCount = ZERO;
 
     public function __construct()
     {
@@ -63,10 +66,18 @@ final class EventLoopBridge
         return $self;
     }
 
-    /** @return iterable<mixed> */
+    /**
+     * @param Channel<T> $channel
+     *
+     * @return iterable<T>
+     *
+     * @template T
+     */
     public function observe(Channel $channel): iterable
     {
-        $this->channels[spl_object_id($channel)] = new Stream();
+        /** @var Stream<T> $stream */
+        $stream                                  = new Stream();
+        $this->channels[spl_object_id($channel)] = $stream;
         $this->events->addChannel($channel);
 
         if ($this->metrics instanceof Metrics) {
@@ -75,11 +86,19 @@ final class EventLoopBridge
 
         $this->startTimer();
 
-        yield from $this->channels[spl_object_id($channel)]->iterable();
+        yield from $stream->iterable();
     }
 
+    /**
+     * @param Future<T> $future
+     *
+     * @return T
+     *
+     * @template T
+     */
     public function await(Future $future): mixed
     {
+        /** @var Deferred<T> $deferred */
         $deferred                              = new Deferred();
         $this->futures[spl_object_id($future)] = $deferred;
         $this->events->addFuture(spl_object_hash($future), $future);
@@ -90,7 +109,6 @@ final class EventLoopBridge
 
         $this->startTimer();
 
-        /** @phpstan-ignore-next-line */
         return await($deferred->promise());
     }
 
@@ -129,23 +147,30 @@ final class EventLoopBridge
             $items = ZERO;
 
             try {
+                /** @psalm-suppress MixedAssignment */
                 while ($event = $this->events->poll()) {
                     $items++;
-                    /** @phpstan-ignore-next-line */
+
+                    /** @psalm-suppress MixedPropertyFetch */
                     switch ($event->type) {
                         case Events\Event\Type::Read:
+                            /** @psalm-suppress MixedArgument */
                             $this->handleReadEvent($event);
                             break;
                         case Events\Event\Type::Close:
+                            /** @psalm-suppress MixedArgument */
                             $this->handleCloseEvent($event);
                             break;
                         case Events\Event\Type::Cancel:
+                            /** @psalm-suppress MixedArgument */
                             $this->handleCancelEvent($event);
                             break;
                         case Events\Event\Type::Kill:
+                            /** @psalm-suppress MixedArgument */
                             $this->handleKillEvent($event);
                             break;
                         case Events\Event\Type::Error:
+                            /** @psalm-suppress MixedArgument */
                             $this->handleErrorEvent($event);
                             break;
                     }
@@ -157,7 +182,6 @@ final class EventLoopBridge
 
             $this->stopTimer();
 
-            /** @phpstan-ignore-next-line */
             if ($items > ZERO && isset($this->scaleRange[$this->scalePosition + 1])) {
                 if ($this->timer instanceof TimerInterface) {
                     Loop::cancelTimer($this->timer);
@@ -173,7 +197,6 @@ final class EventLoopBridge
             if ($items === ZERO) {
                 $this->scaleNoItemsCount++;
 
-                /** @phpstan-ignore-next-line */
                 if ($this->scaleNoItemsCount > 10 && isset($this->scaleRange[$this->scalePosition - 1])) {
                     if ($this->timer instanceof TimerInterface) {
                         Loop::cancelTimer($this->timer);
@@ -196,7 +219,8 @@ final class EventLoopBridge
         });
     }
 
-    private function handleReadEvent(Events\Event $event): void
+    /** @param Event<mixed> $event */
+    private function handleReadEvent(Event $event): void
     {
         if ($event->object instanceof Future) {
             $this->handleFutureReadEvent($event);
@@ -209,7 +233,8 @@ final class EventLoopBridge
         $this->handleChannelReadEvent($event);
     }
 
-    private function handleFutureReadEvent(Events\Event $event): void
+    /** @param Event<mixed> $event */
+    private function handleFutureReadEvent(Event $event): void
     {
         $this->futures[spl_object_id($event->object)]->resolve($event->value);
         unset($this->futures[spl_object_id($event->object)]);
@@ -223,9 +248,11 @@ final class EventLoopBridge
         $futures->gauge(new Label('state', 'resolve'))->incr();
     }
 
-    private function handleChannelReadEvent(Events\Event $event): void
+    /** @param Event<mixed> $event */
+    private function handleChannelReadEvent(Event $event): void
     {
         $this->channels[spl_object_id($event->object)]->value($event->value);
+        /** @psalm-suppress ArgumentTypeCoercion */
         $this->events->addChannel($event->object); /** @phpstan-ignore-line */
 
         if (! ($this->metrics instanceof Metrics)) {
@@ -235,7 +262,8 @@ final class EventLoopBridge
         $this->metrics->channelMessages()->counter(new Label('event', 'read'))->incr();
     }
 
-    private function handleCloseEvent(Events\Event $event): void
+    /** @param Event<mixed> $event */
+    private function handleCloseEvent(Event $event): void
     {
         $this->channels[spl_object_id($event->object)]->done();
         unset($this->channels[spl_object_id($event->object)]);
@@ -249,7 +277,8 @@ final class EventLoopBridge
         $channels->gauge(new Label('state', 'close'))->incr();
     }
 
-    private function handleCancelEvent(Events\Event $event): void
+    /** @param Event<mixed> $event */
+    private function handleCancelEvent(Event $event): void
     {
         $this->futures[spl_object_id($event->object)]->reject(new CanceledFuture());
         unset($this->futures[spl_object_id($event->object)]);
@@ -263,7 +292,8 @@ final class EventLoopBridge
         $futures->gauge(new Label('state', 'cancel'))->incr();
     }
 
-    private function handleKillEvent(Events\Event $event): void
+    /** @param Event<mixed> $event */
+    private function handleKillEvent(Event $event): void
     {
         $this->futures[spl_object_id($event->object)]->reject(new KilledRuntime());
         unset($this->futures[spl_object_id($event->object)]);
@@ -277,7 +307,8 @@ final class EventLoopBridge
         $futures->gauge(new Label('state', 'kill'))->incr();
     }
 
-    private function handleErrorEvent(Events\Event $event): void
+    /** @param Event<Throwable> $event */
+    private function handleErrorEvent(Event $event): void
     {
         if (! ($event->object instanceof Future)) {
             return;
