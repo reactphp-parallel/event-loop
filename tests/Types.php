@@ -30,8 +30,8 @@ assertType('bool', $bridge->await(run(static function (): bool {
     return true;
 })));
 
-assertType('bool|int', $bridge->await(run(static function (): bool|int {
-    return time() % 2 !== 0 ? true : time();
+assertType('bool|string', $bridge->await(run(static function (): bool|string {
+    return time() % 2 !== 0 ? true : 'hammer';
 })));
 
 assertType('null', $bridge->await(run(static function (): void {

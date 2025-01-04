@@ -12,10 +12,11 @@
         </ignoreFiles>
     </projectFiles>
     <stubs>
-        <file name="../../stubs/Channel.stub" />
-        <file name="../../stubs/Event.stub" />
-        <file name="../../stubs/functions.stub" />
-        <file name="../../stubs/Future.stub" />
+        <file name="../../vendor/react-parallel/stubs/stubs/Channel.stub" />
+        <file name="../../vendor/react-parallel/stubs/stubs/Event.stub" />
+        <file name="../../vendor/react-parallel/stubs/stubs/functions.stub" />
+        <file name="../../vendor/react-parallel/stubs/stubs/Future.stub" />
+        <file name="../../vendor/react-parallel/stubs/stubs/Runtime.stub" />
     </stubs>
     <issueHandlers>
 
