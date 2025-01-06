@@ -2,20 +2,31 @@ parameters:
 	level: max
 	ignoreErrors:
 		-
+			message: '#Control structures using switch should not be used.#'
+			path: ../../src/EventLoopBridge.php
+		-
+			message: '#Language construct isset\(\) should not be used.#'
+			path: ../../src/EventLoopBridge.php
+		-
+			message: '#Property ReactParallel\\EventLoop\\Stream<T>::\$wait \(React\\Promise\\Deferred<ReactParallel\\EventLoop\\Done\|ReactParallel\\EventLoop\\Value>\) does not accept React\\Promise\\Deferred<mixed>.#'
+			path: ../../src/Stream.php
+		-
 			message: '#Result of method ReactParallel\\EventLoop\\EventLoopBridge::await\(\) \(void\) is used.#'
 			path: ../../tests/Types.php
-#	ergebnis:
-#		noExtends:
-#			classesAllowedToBeExtended:
-#				- ReactParallel\EventLoop\CancelledException
-#				- ReactParallel\EventLoop\CanceledFuture
-#				- ReactParallel\EventLoop\KilledRuntime
-	stubFiles:
-		- ../../stubs/Event.stub
-#		- ../../stubs/Events.stub
-		- ../../stubs/Future.stub
-		- ../../stubs/Channel.stub
-		- ../../stubs/functions.stub
+		-
+			message: '#usleep blocks the event loop, use React\\Promise\\Timer\\sleep#'
+			path: ../../tests/EventLoopBridgeTest.php
+		-
+			message: '#sleep blocks the event loop, use React\\Promise\\Timer\\sleep#'
+			path: ../../tests/EventLoopBridgeTest.php
+	ergebnis:
+		noExtends:
+			classesAllowedToBeExtended:
+				- Exception
+				- ReactParallel\EventLoop\CancelledException
+				- ReactParallel\EventLoop\CanceledFuture
+				- ReactParallel\EventLoop\KilledRuntime
 
-#includes:
-#	- ../../vendor/wyrihaximus/async-test-utilities/rules.neon
+includes:
+	- ../../vendor/wyrihaximus/async-test-utilities/rules.neon
+	- ../../vendor/react-parallel/stubs/extension.neon

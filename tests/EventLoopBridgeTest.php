@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ReactParallel\Tests\EventLoop;
 
 use parallel\Channel;
-use parallel\Future;
 use parallel\Runtime;
 use React\EventLoop\Loop;
 use ReactParallel\EventLoop\CanceledFuture;
@@ -16,7 +15,6 @@ use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
 use WyriHaximus\Metrics\Configuration;
 use WyriHaximus\Metrics\InMemory\Registry;
 
-use function assert;
 use function bin2hex;
 use function dirname;
 use function parallel\run;
@@ -27,7 +25,6 @@ use function React\Async\await;
 use function React\Promise\all;
 use function React\Promise\resolve;
 use function sleep;
-use function time;
 use function usleep;
 
 final class EventLoopBridgeTest extends AsyncTestCase
@@ -60,7 +57,6 @@ final class EventLoopBridgeTest extends AsyncTestCase
 
             return 'Elmo';
         });
-        assert($future instanceof Future);
 
         $promises = [];
         foreach ($channels as $channel) {
@@ -113,7 +109,6 @@ final class EventLoopBridgeTest extends AsyncTestCase
         self::expectException(CanceledFuture::class);
 
         $future = run(static fn () => sleep(3));
-        assert($future instanceof Future);
 
         $eventLoopBridge = (new EventLoopBridge())->withMetrics(Metrics::create(new Registry(Configuration::create())));
 
@@ -129,13 +124,11 @@ final class EventLoopBridgeTest extends AsyncTestCase
         self::expectException(KilledRuntime::class);
 
         $runtime = new Runtime();
-        $future  = $runtime->run(static function (): int {
+        $future  = $runtime->run(static function (): string {
             sleep(3);
 
-            return time();
+            return 'hammer';
         });
-
-        assert($future instanceof Future);
 
         $eventLoopBridge = (new EventLoopBridge())->withMetrics(Metrics::create(new Registry(Configuration::create())));
 
@@ -158,7 +151,6 @@ final class EventLoopBridgeTest extends AsyncTestCase
 
             throw new CookieMonsterException('Cookie Monster');
         });
-        assert($future instanceof Future);
 
         $eventLoopBridge = (new EventLoopBridge())->withMetrics(Metrics::create(new Registry(Configuration::create())));
 

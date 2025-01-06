@@ -19,6 +19,7 @@
         "wyrihaximus/metrics": "^2.1"
     },
     "require-dev": {
+        "react-parallel/stubs": "^1.1",
         "wyrihaximus/async-test-utilities": "^5.0.25 || ^8.0.5"
     },
     "autoload": {
