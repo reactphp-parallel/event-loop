@@ -20,12 +20,14 @@
         "InstanceOf_": {
             "ignore": [
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleFutureReadEvent",
+                "ReactParallel\\EventLoop\\EventLoopBridge::handleKillEvent",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleCancelEvent"
             ]
         },
         "LogicalNot": {
             "ignore": [
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleFutureReadEvent",
+                "ReactParallel\\EventLoop\\EventLoopBridge::handleKillEvent",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleCancelEvent"
             ]
         },
