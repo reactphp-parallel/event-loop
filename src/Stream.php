@@ -24,7 +24,7 @@ final class Stream implements StreamInterface
     public function __construct()
     {
         $this->queue = new SplQueue();
-        $this->queue->setIteratorMode(SplQueue::IT_MODE_DELETE);
+        $this->queue->setIteratorMode(SplQueue::IT_MODE_DELETE | SplQueue::IT_MODE_DELETE);
         /** @psalm-suppress MixedPropertyTypeCoercion */
         $this->wait = new Deferred();
     }

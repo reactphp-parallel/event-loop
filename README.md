@@ -23,39 +23,37 @@ event loop, that will work, but it adds additional overhead when you have more t
 different major contexts. Share this bridge around so that other packages can use them, and only have one instance
 checking for events.
 
-```php
-use React\EventLoop\Factory;
-use ReactParallel\EventLoop\EventLoopBridge;
-
-$loop = Factory::create();
-$eventLoopBridge = new EventLoopBridge($loop);
-
-$loop->run();
-```
-
 ## Channels
 
 Channels often have a stream of messages going over them, as such the bridge will convert them into an observable.
 
 ```php
 use parallel\Channel;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use ReactParallel\EventLoop\EventLoopBridge;
+use function React\Async\async;
+use function React\Async\await;
+use function React\Promise\Timer\sleep;
 
-$loop = Factory::create();
-$eventLoopBridge = new EventLoopBridge($loop);
+$eventLoopBridge = new EventLoopBridge();
 
-$channel = new Channel(Channel::Infinite);
-$eventLoopBridge->observe($channel)->subscribe(function (string $message) {
-    echo $message, PHP_EOL;
-});
+Loop::futureTick(async(static function () use ($eventLoopBridge) {
+    /** @var Channel<string> */
+    $channel = new Channel(Channel::Infinite);
 
-$loop->futureTick(function () use ($channel): void {
-    $channel->send('Hello World!');
-    $channel->close();
-});
+    Loop::futureTick(async(function () use ($channel): void {
+        $channel->send('Hello World!');
+        // Don't close the channel right after writing to it,
+        // as it will be closed on both ends and the other
+        // thread won't receive your message
+        await(sleep(1));
+        $channel->close();
+    }));
 
-$loop->run();
+    foreach ($eventLoopBridge->observe($channel) as $message) {
+        echo $message, PHP_EOL;
+    }
+}));
 ```
 
 ## Futures
@@ -64,24 +62,20 @@ Where promises are push, futures are pull, as such the event loop will poll and 
 available.
 
 ```php
-use parallel\Channel;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use ReactParallel\EventLoop\EventLoopBridge;
 use function parallel\run;
+use function React\Async\async;
 
-$loop = Factory::create();
-$eventLoopBridge = new EventLoopBridge($loop);
+$eventLoopBridge = new EventLoopBridge();
 
-$future = run(function (): string {
-    return 'Hello World!';
-});
+Loop::futureTick(async(static function () use ($eventLoopBridge) {
+    $future = run(function (): string {
+        return 'Hello World!';
+    });
 
-$channel = new Channel(Channel::Infinite);
-$eventLoopBridge->await($future)->then(function (string $message) {
-    echo $message, PHP_EOL;
-});
-
-$loop->run();
+    echo $eventLoopBridge->await($future), PHP_EOL;
+}));
 ```
 
 ## Metrics
@@ -105,7 +99,7 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## License ##
 
-Copyright 2024 [Cees-Jan Kiewiet](http://wyrihaximus.net/)
+Copyright 2025 [Cees-Jan Kiewiet](http://wyrihaximus.net/)
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
