@@ -26,13 +26,30 @@ assertType('iterable<stdClass>', $bridge->observe($channelStd));
 /**
  * Await
  */
+assertType('Closure(): void', (static fn () => $bridge->await(run(static function (): void {
+    sleep(1);
+}))));
+
+assertType('Closure(): void', (static fn () => $bridge->await(run(static function (int $time): void {
+    sleep($time);
+}, [1]))));
+
 assertType('bool', $bridge->await(run(static function (): bool {
     return true;
 })));
 
-assertType('bool|string', $bridge->await(run(static function (): bool|string {
-    return time() % 2 !== 0 ? true : 'hammer';
+assertType('int<1, max>|true', $bridge->await(run(static function (): bool|int {
+    return time() % 2 !== 0 ? true : time();
 })));
 
-assertType('null', $bridge->await(run(static function (): void {
-})));
+assertType('int<1, max>|true', $bridge->await(run(static function (int $mod): bool|int {
+    return time() % $mod !== 0 ? true : time();
+}, [2])));
+
+assertType('bool|int<1, max>', $bridge->await(run(static function (int $mod, bool $yolo): bool|int {
+    return time() % $mod !== 0 ? $yolo : time();
+}, [2, (time() % 13 !== 0)])));
+
+assertType('bool|non-empty-string', $bridge->await(run(static function (int $mod, bool $yolo, string $oloy): bool|string {
+    return time() % $mod !== 0 ? $yolo : $oloy;
+}, [2, (time() % 13 !== 0), bin2hex(random_bytes(13))])));

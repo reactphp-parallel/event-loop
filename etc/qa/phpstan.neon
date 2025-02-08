@@ -11,14 +11,14 @@ parameters:
 			message: '#Property ReactParallel\\EventLoop\\Stream<T>::\$wait \(React\\Promise\\Deferred<ReactParallel\\EventLoop\\Done\|ReactParallel\\EventLoop\\Value>\) does not accept React\\Promise\\Deferred<mixed>.#'
 			path: ../../src/Stream.php
 		-
-			message: '#Result of method ReactParallel\\EventLoop\\EventLoopBridge::await\(\) \(void\) is used.#'
-			path: ../../tests/Types.php
-		-
 			message: '#usleep blocks the event loop, use React\\Promise\\Timer\\sleep#'
 			path: ../../tests/EventLoopBridgeTest.php
 		-
 			message: '#sleep blocks the event loop, use React\\Promise\\Timer\\sleep#'
 			path: ../../tests/EventLoopBridgeTest.php
+		-
+			message: '#sleep blocks the event loop, use React\\Promise\\Timer\\sleep#'
+			path: ../../tests/Types.php
 	ergebnis:
 		noExtends:
 			classesAllowedToBeExtended:
