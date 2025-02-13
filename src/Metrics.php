@@ -7,7 +7,7 @@ namespace ReactParallel\EventLoop;
 use WyriHaximus\Metrics\Label\Name;
 use WyriHaximus\Metrics\Registry;
 
-final class Metrics
+final readonly class Metrics
 {
     public function __construct(
         private Registry\Gauges $channels,
@@ -33,7 +33,7 @@ final class Metrics
             ),
             $registry->counter(
                 'react_parallel_event_loop_timer',
-                'Currently active channels in the event loop bridge',
+                'Currently active timers in the event loop bridge',
                 new Name('event'),
             ),
             $registry->counter(
@@ -43,7 +43,7 @@ final class Metrics
             ),
             $registry->counter(
                 'react_parallel_event_loop_channel_messages',
-                'Currently active channels in the event loop bridge',
+                'Message counts going over channels through the event loop bridge',
                 new Name('event'),
             ),
         );
