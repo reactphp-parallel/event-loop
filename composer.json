@@ -20,7 +20,7 @@
     },
     "require-dev": {
         "react-parallel/stubs": "^1.1",
-        "wyrihaximus/async-test-utilities": "^5.0.25 || ^8.0.5"
+        "wyrihaximus/async-test-utilities": "^5.0.25 || ^8.0.5 || ^9.0.0"
     },
     "autoload": {
         "psr-4": {
