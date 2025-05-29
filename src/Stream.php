@@ -16,7 +16,7 @@ use function React\Async\await;
 final class Stream implements StreamInterface
 {
     /** @var SplQueue<T> */
-    private SplQueue $queue;
+    private readonly SplQueue $queue;
 
     /** @var Deferred<Value|Done> */
     private Deferred $wait;
@@ -25,7 +25,6 @@ final class Stream implements StreamInterface
     {
         $this->queue = new SplQueue();
         $this->queue->setIteratorMode(SplQueue::IT_MODE_DELETE | SplQueue::IT_MODE_DELETE);
-        /** @psalm-suppress MixedPropertyTypeCoercion */
         $this->wait = new Deferred();
     }
 
@@ -45,7 +44,6 @@ final class Stream implements StreamInterface
     public function iterable(): iterable
     {
         for (;;) {
-            /** @psalm-suppress MixedAssignment */
             $type = await($this->wait->promise());
 
             foreach ($this->queue as $value) {
@@ -56,7 +54,6 @@ final class Stream implements StreamInterface
                 break;
             }
 
-            /** @psalm-suppress MixedPropertyTypeCoercion */
             $this->wait = new Deferred();
         }
     }

@@ -17,15 +17,49 @@
     "ignoreMsiWithNoMutations": true,
     "mutators": {
         "@default": true,
+        "BitwiseOr": {
+            "ignore": [
+                "ReactParallel\\EventLoop\\Stream::__construct"
+            ]
+        },
+        "GreaterThan": {
+            "ignore": [
+                "ReactParallel\\EventLoop\\EventLoopBridge::runTimer"
+            ]
+        },
+        "GreaterThanNegotiation": {
+            "ignore": [
+                "ReactParallel\\EventLoop\\EventLoopBridge::runTimer"
+            ]
+        },
+        "Increment": {
+            "ignore": [
+                "ReactParallel\\EventLoop\\EventLoopBridge::runTimer"
+            ]
+        },
+        "Identical": {
+            "ignore": [
+                "ReactParallel\\EventLoop\\EventLoopBridge::runTimer"
+            ]
+        },
         "InstanceOf_": {
             "ignore": [
+                "ReactParallel\\EventLoop\\EventLoopBridge::observe",
+                "ReactParallel\\EventLoop\\EventLoopBridge::await",
+                "ReactParallel\\EventLoop\\EventLoopBridge::startTimer",
+                "ReactParallel\\EventLoop\\EventLoopBridge::stopTimer",
+                "ReactParallel\\EventLoop\\EventLoopBridge::runTimer",
+                "ReactParallel\\EventLoop\\EventLoopBridge::handleChannelReadEvent",
+                "ReactParallel\\EventLoop\\EventLoopBridge::handleCloseEvent",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleFutureReadEvent",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleKillEvent",
+                "ReactParallel\\EventLoop\\EventLoopBridge::handleErrorEvent",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleCancelEvent"
             ]
         },
         "LogicalNot": {
             "ignore": [
+                "ReactParallel\\EventLoop\\EventLoopBridge::stopTimer",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleFutureReadEvent",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleKillEvent",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleCancelEvent"
@@ -34,6 +68,7 @@
         "MethodCallRemoval": {
             "ignore": [
                 "ReactParallel\\EventLoop\\Stream::value",
+                "ReactParallel\\EventLoop\\EventLoopBridge::stopTimer",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleReadEvent",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleFutureReadEvent",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleChannelReadEvent",

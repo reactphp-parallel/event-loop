@@ -19,12 +19,9 @@ use function React\Async\await;
 use function spl_object_hash;
 use function spl_object_id;
 
-use const WyriHaximus\Constants\Numeric\ZERO;
-
-/** @psalm-suppress TooManyTemplateParams */
 final class EventLoopBridge
 {
-    private const DEFAULT_SCALE_RANGE = [
+    private const array DEFAULT_SCALE_RANGE = [
         0.01,
         0.0075,
         0.0050,
@@ -32,7 +29,11 @@ final class EventLoopBridge
         0.001,
     ];
 
-    private const DEFAULT_SCALE_POSITION = 2;
+    private const int DEFAULT_SCALE_POSITION = self::START_COUNT;
+    private const int START_COUNT            = 0;
+    private const int EVENTS_0_TIMEOUT       = 0;
+    private const int ONE_SCALE_POSITION     = 1;
+    private const int SCALE_NO_ITEMS_CEILING = 10;
 
     private Metrics|null $metrics = null;
 
@@ -50,12 +51,12 @@ final class EventLoopBridge
     /** @var array<float> */
     private array $scaleRange      = self::DEFAULT_SCALE_RANGE;
     private int $scalePosition     = self::DEFAULT_SCALE_POSITION;
-    private int $scaleNoItemsCount = ZERO;
+    private int $scaleNoItemsCount = self::START_COUNT;
 
     public function __construct()
     {
         $this->events = new Events();
-        $this->events->setTimeout(ZERO);
+        $this->events->setTimeout(self::EVENTS_0_TIMEOUT);
     }
 
     public function withMetrics(Metrics $metrics): self
@@ -114,7 +115,7 @@ final class EventLoopBridge
 
     private function startTimer(): void
     {
-        if ($this->timer !== null) {
+        if ($this->timer instanceof TimerInterface) {
             return;
         }
 
@@ -127,7 +128,7 @@ final class EventLoopBridge
 
     private function stopTimer(): void
     {
-        if ($this->timer === null || count($this->channels) !== ZERO || count($this->futures) !== ZERO) {
+        if (! $this->timer instanceof TimerInterface || count($this->channels) !== self::START_COUNT || count($this->futures) !== self::START_COUNT) {
             return;
         }
 
@@ -144,36 +145,32 @@ final class EventLoopBridge
     private function runTimer(): void
     {
         $this->timer = Loop::addPeriodicTimer($this->scaleRange[$this->scalePosition], function (): void {
-            $items = ZERO;
+            $items = self::START_COUNT;
 
             try {
-                /** @psalm-suppress MixedAssignment */
-                while ($event = $this->events->poll()) {
+                $event = $this->events->poll();
+                while ($event instanceof Event) {
                     $items++;
 
-                    /** @psalm-suppress MixedPropertyFetch */
                     switch ($event->type) {
                         case Events\Event\Type::Read:
-                            /** @psalm-suppress MixedArgument */
                             $this->handleReadEvent($event);
                             break;
                         case Events\Event\Type::Close:
-                            /** @psalm-suppress MixedArgument */
                             $this->handleCloseEvent($event);
                             break;
                         case Events\Event\Type::Cancel:
-                            /** @psalm-suppress MixedArgument */
                             $this->handleCancelEvent($event);
                             break;
                         case Events\Event\Type::Kill:
-                            /** @psalm-suppress MixedArgument */
                             $this->handleKillEvent($event);
                             break;
                         case Events\Event\Type::Error:
-                            /** @psalm-suppress MixedArgument */
                             $this->handleErrorEvent($event);
                             break;
                     }
+
+                    $event = $this->events->poll();
                 }
             } catch (Events\Error\Timeout) {
                 // Catch and ignore this exception as it will trigger when events::poll() will have nothing for us
@@ -182,7 +179,7 @@ final class EventLoopBridge
 
             $this->stopTimer();
 
-            if ($items > ZERO && isset($this->scaleRange[$this->scalePosition + 1])) {
+            if ($items > self::START_COUNT && isset($this->scaleRange[$this->scalePosition + self::ONE_SCALE_POSITION])) {
                 if ($this->timer instanceof TimerInterface) {
                     Loop::cancelTimer($this->timer);
                     $this->timer = null;
@@ -191,13 +188,13 @@ final class EventLoopBridge
                 $this->scalePosition++;
                 $this->runTimer();
 
-                $this->scaleNoItemsCount = ZERO;
+                $this->scaleNoItemsCount = self::START_COUNT;
             }
 
-            if ($items === ZERO) {
+            if ($items === self::START_COUNT) {
                 $this->scaleNoItemsCount++;
 
-                if ($this->scaleNoItemsCount > 10 && isset($this->scaleRange[$this->scalePosition - 1])) {
+                if ($this->scaleNoItemsCount > self::SCALE_NO_ITEMS_CEILING && isset($this->scaleRange[$this->scalePosition - self::ONE_SCALE_POSITION])) {
                     if ($this->timer instanceof TimerInterface) {
                         Loop::cancelTimer($this->timer);
                         $this->timer = null;
@@ -206,7 +203,7 @@ final class EventLoopBridge
                     $this->scalePosition--;
                     $this->runTimer();
 
-                    $this->scaleNoItemsCount = ZERO;
+                    $this->scaleNoItemsCount = self::START_COUNT;
                 }
             }
 
@@ -252,7 +249,6 @@ final class EventLoopBridge
     private function handleChannelReadEvent(Event $event): void
     {
         $this->channels[spl_object_id($event->object)]->value($event->value);
-        /** @psalm-suppress ArgumentTypeCoercion */
         $this->events->addChannel($event->object); /** @phpstan-ignore-line */
 
         if (! ($this->metrics instanceof Metrics)) {
