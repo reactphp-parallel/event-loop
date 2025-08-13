@@ -20,7 +20,7 @@
     "require-dev": {
         "react-parallel/stubs": "^1.2",
         "react/promise-timer": "^1.11",
-        "wyrihaximus/async-test-utilities": "^9.3.0",
+        "wyrihaximus/async-test-utilities": "^9.4.2",
         "wyrihaximus/makefiles": "^0.4.2"
     },
     "autoload": {
