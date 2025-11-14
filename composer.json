@@ -21,7 +21,7 @@
     "react-parallel/stubs": "^1.2",
     "react/promise-timer": "^1.11",
     "wyrihaximus/async-test-utilities": "^10.5.0",
-    "wyrihaximus/makefiles": "^0.7.11"
+    "wyrihaximus/makefiles": "^0.7.12"
   },
   "autoload": {
     "psr-4": {
