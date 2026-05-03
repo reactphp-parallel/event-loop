@@ -12,16 +12,16 @@
   "require": {
     "php": "^8.4",
     "ext-parallel": "*",
-    "react/async": "^4.3",
-    "react/event-loop": "^1.5",
-    "react/promise": "^3.2",
-    "wyrihaximus/metrics": "^3"
+    "react/async": "^4.3.0",
+    "react/event-loop": "^1.6.0",
+    "react/promise": "^3.3.0",
+    "wyrihaximus/metrics": "^3.0.0"
   },
   "require-dev": {
-    "react-parallel/stubs": "^1.2",
-    "react/promise-timer": "^1.11",
-    "wyrihaximus/async-test-utilities": "^10.5.0",
-    "wyrihaximus/makefiles": "^0.7.15"
+    "react-parallel/stubs": "^1.2.0",
+    "react/promise-timer": "^1.11.0",
+    "wyrihaximus/async-test-utilities": "^12.2.0",
+    "wyrihaximus/makefiles": "^0.7.16"
   },
   "autoload": {
     "psr-4": {

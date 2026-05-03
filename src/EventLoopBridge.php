@@ -19,6 +19,7 @@ use function React\Async\await;
 use function spl_object_hash;
 use function spl_object_id;
 
+/** @api */
 final class EventLoopBridge
 {
     private const array DEFAULT_SCALE_RANGE = [
