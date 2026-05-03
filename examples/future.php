@@ -1,7 +1,10 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 use React\EventLoop\Loop;
 use ReactParallel\EventLoop\EventLoopBridge;
+
 use function parallel\run;
 use function React\Async\async;
 
@@ -9,8 +12,8 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 $eventLoopBridge = new EventLoopBridge();
 
-Loop::futureTick(async(static function () use ($eventLoopBridge) {
-    $future = run(function (): string {
+Loop::futureTick(async(static function () use ($eventLoopBridge): void {
+    $future = run(static function (): string {
         return 'Hello World!';
     });
 

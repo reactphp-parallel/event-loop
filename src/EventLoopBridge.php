@@ -249,8 +249,12 @@ final class EventLoopBridge
     /** @param Event<mixed> $event */
     private function handleChannelReadEvent(Event $event): void
     {
+        if (! ($event->object instanceof Channel)) {
+            return;
+        }
+
         $this->channels[spl_object_id($event->object)]->value($event->value);
-        $this->events->addChannel($event->object); /** @phpstan-ignore-line */
+        $this->events->addChannel($event->object);
 
         if (! ($this->metrics instanceof Metrics)) {
             return;
