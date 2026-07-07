@@ -26,11 +26,11 @@ assertType('iterable<stdClass>', $bridge->observe($channelStd));
 /**
  * Await
  */
-assertType('Closure(): void', (static fn () => $bridge->await(run(static function (): void {
+assertType('static-Closure(): void', (static fn () => $bridge->await(run(static function (): void {
     sleep(1);
 }))));
 
-assertType('Closure(): void', (static fn () => $bridge->await(run(static function (int $time): void {
+assertType('static-Closure(): void', (static fn () => $bridge->await(run(static function (int $time): void {
     sleep($time);
 }, [1]))));
 

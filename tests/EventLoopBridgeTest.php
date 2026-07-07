@@ -176,7 +176,6 @@ final class EventLoopBridgeTest extends AsyncTestCase
                 throw new CookieMonsterException('Cookie Monster');
             });
 
-            /** @phpstan-ignore deadCode.unreachable */
             $eventLoopBridge->await($future);
         } catch (Throwable $error) {
             throw $error;

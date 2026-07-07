@@ -13,9 +13,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $eventLoopBridge = new EventLoopBridge();
 
 Loop::futureTick(async(static function () use ($eventLoopBridge): void {
-    $future = run(static function (): string {
-        return 'Hello World!';
-    });
+    $future = run(static fn (): string => 'Hello World!');
 
     echo $eventLoopBridge->await($future), PHP_EOL;
 }));
