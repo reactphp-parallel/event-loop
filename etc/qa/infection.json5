@@ -78,5 +78,6 @@
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleErrorEvent"
             ]
         }
-    }
+    },
+    "threads": 64
 }

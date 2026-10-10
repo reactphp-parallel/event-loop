@@ -20,7 +20,6 @@ use WyriHaximus\Metrics\Printer\Prometheus;
 use WyriHaximus\Metrics\Registry as RegistryContract;
 
 use function bin2hex;
-use function dirname;
 use function parallel\run;
 use function random_bytes;
 use function range;
@@ -164,12 +163,12 @@ final class EventLoopBridgeTest extends AsyncTestCase
     public function futureError(): void
     {
         self::expectException(CookieMonsterException::class);
-        self::expectExceptionMessage('Cookie Monster');
+        self::expectExceptionMessageIsOrContains('Cookie Monster');
         [$eventLoopBridge, $metricsRegistry] = $this->createBridge();
 
         try {
             $future = run(static function (): never {
-                require_once dirname(__DIR__) . '/vendor/autoload.php';
+                require_once __DIR__ . '/../vendor/autoload.php';
 
                 blockingSleep(1);
 
