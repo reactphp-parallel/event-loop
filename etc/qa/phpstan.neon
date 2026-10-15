@@ -11,9 +11,6 @@ parameters:
 		-
 			message: '#Language construct isset\(\) should not be used.#'
 			path: ../../src/EventLoopBridge.php
-		-
-			message: '#Property ReactParallel\\EventLoop\\Stream<T>::\$wait \(React\\Promise\\Deferred<ReactParallel\\EventLoop\\Done\|ReactParallel\\EventLoop\\Value>\) does not accept React\\Promise\\Deferred<mixed>.#'
-			path: ../../src/Stream.php
 		-   # https://github.com/shipmonk-rnd/dead-code-detector?tab=readme-ov-file#interface-methods
 			identifier: shipmonk.deadMethod
 			path: ../../src/StreamInterface.php
