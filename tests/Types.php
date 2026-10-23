@@ -25,11 +25,14 @@ assertType('iterable<stdClass>', $bridge->observe($channelStd));
 
 /**
  * Await
+ *
+ * @phpstan-ignore wyrihaximus.reactphp.async.awaitReachedWithoutAsync
  */
 assertType('static-Closure(): void', (static fn () => $bridge->await(run(static function (): void {
     sleep(1);
 }))));
 
+/** @phpstan-ignore wyrihaximus.reactphp.async.awaitReachedWithoutAsync */
 assertType('static-Closure(): void', (static fn () => $bridge->await(run(static function (int $time): void {
     sleep($time);
 }, [1]))));

@@ -249,11 +249,11 @@ final class EventLoopBridge
     /** @param Event<mixed> $event */
     private function handleChannelReadEvent(Event $event): void
     {
-        if (! ($event->object instanceof Channel)) {
+        $this->channels[spl_object_id($event->object)]->value($event->value);
+        if (! $event->object instanceof  Channel) {
             return;
         }
 
-        $this->channels[spl_object_id($event->object)]->value($event->value);
         $this->events->addChannel($event->object);
 
         if (! ($this->metrics instanceof Metrics)) {
@@ -311,10 +311,6 @@ final class EventLoopBridge
     /** @param Event<Throwable> $event */
     private function handleErrorEvent(Event $event): void
     {
-        if (! ($event->object instanceof Future)) {
-            return;
-        }
-
         $this->futures[spl_object_id($event->object)]->reject($event->value);
         unset($this->futures[spl_object_id($event->object)]);
 
