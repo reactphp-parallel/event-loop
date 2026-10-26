@@ -20,7 +20,6 @@ use WyriHaximus\Metrics\Printer\Prometheus;
 use WyriHaximus\Metrics\Registry as RegistryContract;
 
 use function bin2hex;
-use function dirname;
 use function parallel\run;
 use function random_bytes;
 use function range;
@@ -46,6 +45,7 @@ final class EventLoopBridgeTest extends AsyncTestCase
         $future = run(static function () use ($channels): string {
             foreach (range(0, 13) as $i) {
                 usleep(100);
+                /** @phpstan-ignore foreach.unusedValue */
                 foreach (range(0, 13) as $j) {
                     foreach ($channels as $channel) {
                         $channel->send($i);
@@ -81,6 +81,7 @@ final class EventLoopBridgeTest extends AsyncTestCase
 
         $range = [];
         foreach (range(0, 13) as $i) {
+            /** @phpstan-ignore foreach.unusedValue */
             foreach (range(0, 13) as $j) {
                 $range[] = $i;
             }
@@ -102,6 +103,7 @@ final class EventLoopBridgeTest extends AsyncTestCase
 
         $onNext                              = false;
         [$eventLoopBridge, $metricsRegistry] = $this->createBridge();
+        /** @phpstan-ignore foreach.unusedValue */
         foreach ($eventLoopBridge->observe($channel) as $item) {
             $onNext = true;
         }
@@ -164,12 +166,12 @@ final class EventLoopBridgeTest extends AsyncTestCase
     public function futureError(): void
     {
         self::expectException(CookieMonsterException::class);
-        self::expectExceptionMessage('Cookie Monster');
+        self::expectExceptionMessageIsOrContains('Cookie Monster');
         [$eventLoopBridge, $metricsRegistry] = $this->createBridge();
 
         try {
             $future = run(static function (): never {
-                require_once dirname(__DIR__) . '/vendor/autoload.php';
+                require_once __DIR__ . '/../vendor/autoload.php';
 
                 blockingSleep(1);
 
@@ -184,6 +186,156 @@ final class EventLoopBridgeTest extends AsyncTestCase
             await(sleep(0.000001));
             $this->assertPrint($metricsRegistry, 'react_parallel_event_loop_futures{state="active"} 0', 'react_parallel_event_loop_futures{state="error"} 1');
         }
+    }
+
+    #[Test]
+    public function readWithoutMetrics(): void
+    {
+        $d = bin2hex(random_bytes(13));
+
+        $channels        = [Channel::make($d . '_a', Channel::Infinite), Channel::make($d . '_b', Channel::Infinite)];
+        $eventLoopBridge = new EventLoopBridge();
+
+        $future = run(static function () use ($channels): string {
+            foreach (range(0, 5) as $i) {
+                usleep(100);
+                /** @phpstan-ignore foreach.unusedValue */
+                foreach (range(0, 5) as $j) {
+                    foreach ($channels as $channel) {
+                        $channel->send($i);
+                    }
+                }
+            }
+
+            blockingSleep(1);
+            foreach ($channels as $channel) {
+                $channel->close();
+            }
+
+            return 'Bert';
+        });
+
+        $promises = [];
+        foreach ($channels as $channel) {
+            $promises[] = async(static function (EventLoopBridge $eventLoopBridge, Channel $channel): array {
+                $items = [];
+                foreach ($eventLoopBridge->observe($channel) as $item) {
+                    $items[] = $item;
+                }
+
+                return $items;
+            })($eventLoopBridge, $channel);
+        }
+
+        $promises[] = resolve($eventLoopBridge->await($future));
+
+        $rd = await(all($promises));
+
+        $range = [];
+        foreach (range(0, 5) as $i) {
+            /** @phpstan-ignore foreach.unusedValue */
+            foreach (range(0, 5) as $j) {
+                $range[] = $i;
+            }
+        }
+
+        self::assertSame([$range, $range, 'Bert'], $rd);
+    }
+
+    #[Test]
+    public function closeWithoutMetrics(): void
+    {
+        $d = bin2hex(random_bytes(13));
+
+        $channel = Channel::make($d . '_a', Channel::Infinite);
+        Loop::addTimer(0.1, static function () use ($channel): void {
+            $channel->close();
+        });
+
+        $onNext          = false;
+        $eventLoopBridge = new EventLoopBridge();
+        /** @phpstan-ignore foreach.unusedValue */
+        foreach ($eventLoopBridge->observe($channel) as $item) {
+            $onNext = true;
+        }
+
+        self::assertFalse($onNext, 'onNext should never be called');
+    }
+
+    #[Test]
+    public function cancelWithoutMetrics(): void
+    {
+        self::expectException(CanceledFuture::class);
+        $eventLoopBridge = new EventLoopBridge();
+
+        $future = run(static fn (): int => blockingSleep(3));
+
+        Loop::addTimer(1, static function () use ($future): void {
+            $future->cancel();
+        });
+        $eventLoopBridge->await($future);
+    }
+
+    #[Test]
+    public function killWithoutMetrics(): void
+    {
+        self::expectException(KilledRuntime::class);
+        $eventLoopBridge = new EventLoopBridge();
+
+        $runtime = new Runtime();
+        $future  = $runtime->run(static function (): string {
+            blockingSleep(3);
+
+            return 'hammer';
+        });
+
+        Loop::addTimer(1, static function () use ($runtime): void {
+            $runtime->kill();
+        });
+        $eventLoopBridge->await($future);
+    }
+
+    #[Test]
+    public function futureErrorWithoutMetrics(): void
+    {
+        self::expectException(CookieMonsterException::class);
+        self::expectExceptionMessageIsOrContains('Cookie Monster');
+        $eventLoopBridge = new EventLoopBridge();
+
+        $future = run(static function (): never {
+            require_once __DIR__ . '/../vendor/autoload.php';
+
+            blockingSleep(1);
+
+            throw new CookieMonsterException('Cookie Monster');
+        });
+
+        $eventLoopBridge->await($future);
+    }
+
+    #[Test]
+    public function timerScaling(): void
+    {
+        $d       = bin2hex(random_bytes(13));
+        $channel = Channel::make($d . '_scaling', Channel::Infinite);
+
+        [$eventLoopBridge, $metricsRegistry] = $this->createBridge();
+
+        // Send an item to trigger scale up (scalePosition increments)
+        $channel->send('item');
+
+        // After scale up, delay 0.2s without new items so scaleNoItemsCount exceeds 10 and scales down
+        Loop::addTimer(0.25, static function () use ($channel): void {
+            $channel->close();
+        });
+
+        $items = [];
+        foreach ($eventLoopBridge->observe($channel) as $item) {
+            $items[] = $item;
+        }
+
+        self::assertSame(['item'], $items);
+        $this->assertPrint($metricsRegistry, 'react_parallel_event_loop_timer_total{event="start"} 1');
     }
 
     /** @return array{EventLoopBridge, RegistryContract} */

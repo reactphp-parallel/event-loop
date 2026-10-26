@@ -6,7 +6,7 @@
 [![Type Coverage](https://shepherd.dev/github/Reactphp-parallel/event-loop/coverage.svg)](https://shepherd.dev/github/Reactphp-parallel/event-loop)
 [![License](https://poser.pugx.org/React-parallel/event-loop/license.png)](https://packagist.org/packages/React-parallel/event-loop)
 
-### Installation ###
+## Installation
 
 To install via [Composer](http://getcomposer.org/), use the command below, it will automatically detect the latest version and bind it with `~`.
 
@@ -93,11 +93,11 @@ $loop = Factory::create();
 $eventLoopBridge = (new EventLoopBridge($loop))->withMetrics(Metrics::create(new Registry(Configuration::create())));
 ```
 
-## Contributing ##
+## Contributing
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
-## License ##
+## License
 
 Copyright 2026 [Cees-Jan Kiewiet](http://wyrihaximus.net/)
 
