@@ -109,7 +109,7 @@ final class EventLoopBridgeTest extends AsyncTestCase
         }
 
         self::assertFalse($onNext, 'onNext should never be called');
-        $this->assertPrint($metricsRegistry, 'react_parallel_event_loop_timer_total{event="start"} 1', 'react_parallel_event_loop_channels{state="active"} 1');
+        $this->assertPrint($metricsRegistry, 'react_parallel_event_loop_timer_total{event="start"} 1', 'react_parallel_event_loop_channels{state="active"} 0', 'react_parallel_event_loop_channels{state="close"} 1');
         $this->assertPrintMatchesRegularExpression($metricsRegistry, '/react_parallel_event_loop_timer_total\{event\="tick"\} [0-9]/m', '/react_parallel_event_loop_timer_items_total\{count\="0"\} [0-9]/m');
     }
 
@@ -336,6 +336,32 @@ final class EventLoopBridgeTest extends AsyncTestCase
 
         self::assertSame(['item'], $items);
         $this->assertPrint($metricsRegistry, 'react_parallel_event_loop_timer_total{event="start"} 1');
+    }
+
+    #[Test]
+    public function observeCleansUpWhenChannelIsClosed(): void
+    {
+        $d = bin2hex(random_bytes(13));
+
+        $channel = Channel::make($d . '_cleanup', Channel::Infinite);
+
+        [$eventLoopBridge, $metricsRegistry] = $this->createBridge();
+
+        // Send a value, then close the channel — observe should clean up properly
+        $channel->send('hello');
+        Loop::addTimer(0.1, static function () use ($channel): void {
+            $channel->close();
+        });
+
+        $items = [];
+        foreach ($eventLoopBridge->observe($channel) as $item) {
+            $items[] = $item;
+        }
+
+        self::assertSame(['hello'], $items);
+
+        // After observe completes, the channel should be fully cleaned up
+        $this->assertPrint($metricsRegistry, 'react_parallel_event_loop_channels{state="active"} 0', 'react_parallel_event_loop_channels{state="close"} 1');
     }
 
     /** @return array{EventLoopBridge, RegistryContract} */
