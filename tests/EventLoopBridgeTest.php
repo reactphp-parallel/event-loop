@@ -364,6 +364,32 @@ final class EventLoopBridgeTest extends AsyncTestCase
         $this->assertPrint($metricsRegistry, 'react_parallel_event_loop_channels{state="active"} 0', 'react_parallel_event_loop_channels{state="close"} 1');
     }
 
+    #[Test]
+    public function handleCloseEventIsIdempotent(): void
+    {
+        $d = bin2hex(random_bytes(13));
+
+        $channel = Channel::make($d . '_close_idempotent', Channel::Infinite);
+
+        [$eventLoopBridge, $metricsRegistry] = $this->createBridge();
+
+        // Send a value, then close the channel — observe should clean up without FiberError
+        $channel->send('test');
+        Loop::addTimer(0.1, static function () use ($channel): void {
+            $channel->close();
+        });
+
+        $items = [];
+        foreach ($eventLoopBridge->observe($channel) as $item) {
+            $items[] = $item;
+        }
+
+        self::assertSame(['test'], $items);
+
+        // Verify cleanup happened without FiberError
+        $this->assertPrint($metricsRegistry, 'react_parallel_event_loop_channels{state="active"} 0', 'react_parallel_event_loop_channels{state="close"} 1');
+    }
+
     /** @return array{EventLoopBridge, RegistryContract} */
     private function createBridge(): array
     {

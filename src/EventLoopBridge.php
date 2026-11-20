@@ -294,7 +294,13 @@ final class EventLoopBridge
     /** @param Event<mixed> $event */
     private function handleCloseEvent(Event $event): void
     {
-        $this->channels[spl_object_id($event->object)]->done();
+        $id = spl_object_id($event->object);
+        if (! isset($this->channels[$id])) {
+            return;
+        }
+
+        $this->channels[$id]->done();
+        unset($this->channels[$id]);
     }
 
     /** @param Event<mixed> $event */
