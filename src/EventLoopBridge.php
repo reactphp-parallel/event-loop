@@ -88,7 +88,35 @@ final class EventLoopBridge
 
         $this->startTimer();
 
-        yield from $stream->iterable();
+        try {
+            yield from $stream->iterable();
+        } finally {
+            $this->unobserve($channel, $stream);
+        }
+    }
+
+    /**
+     * @param Channel<mixed>         $channel
+     * @param StreamInterface<mixed> $stream
+     */
+    private function unobserve(Channel $channel, StreamInterface $stream): void
+    {
+        $id = spl_object_id($channel);
+
+        if (! isset($this->channels[$id])) {
+            return;
+        }
+
+        unset($this->channels[$id]);
+        $stream->done();
+
+        if ($this->metrics instanceof Metrics) {
+            $channels = $this->metrics->channels();
+            $channels->gauge(new Label('state', 'active'))->dcr();
+            $channels->gauge(new Label('state', 'close'))->incr();
+        }
+
+        $this->stopTimer();
     }
 
     /**
@@ -266,16 +294,13 @@ final class EventLoopBridge
     /** @param Event<mixed> $event */
     private function handleCloseEvent(Event $event): void
     {
-        $this->channels[spl_object_id($event->object)]->done();
-        unset($this->channels[spl_object_id($event->object)]);
-
-        if (! ($this->metrics instanceof Metrics)) {
+        $id = spl_object_id($event->object);
+        if (! isset($this->channels[$id])) {
             return;
         }
 
-        $channels = $this->metrics->channels();
-        $channels->gauge(new Label('state', 'active'))->dcr();
-        $channels->gauge(new Label('state', 'close'))->incr();
+        $this->channels[$id]->done();
+        unset($this->channels[$id]);
     }
 
     /** @param Event<mixed> $event */

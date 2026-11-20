@@ -77,6 +77,11 @@
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleKillEvent",
                 "ReactParallel\\EventLoop\\EventLoopBridge::handleErrorEvent"
             ]
+        },
+        "ReturnRemoval": {
+            "ignore": [
+                "ReactParallel\\EventLoop\\Stream::done"
+            ]
         }
     },
     "threads": 64

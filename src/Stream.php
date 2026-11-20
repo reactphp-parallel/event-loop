@@ -21,6 +21,8 @@ final class Stream implements StreamInterface
     /** @var Deferred<Value|Done> */
     private Deferred $wait;
 
+    private bool $isDone = false;
+
     public function __construct()
     {
         $this->queue = new SplQueue();
@@ -37,7 +39,23 @@ final class Stream implements StreamInterface
 
     public function done(): void
     {
+        if ($this->isDone) {
+            return;
+        }
+
+        $this->isDone = true;
+        $this->resolveDone();
+    }
+
+    private function resolveDone(): void
+    {
+        // Suppress FiberError: the Fiber may already be in the finally block
+        // when done() is called, making resume() fail.
+        $promise = $this->wait->promise();
         $this->wait->resolve(new Done());
+        $promise->catch(static function (): void {
+            // Ignore FiberError and any other rejection
+        });
     }
 
     /** @return iterable<T> */
